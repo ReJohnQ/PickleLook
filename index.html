@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.1.8.1">
+<meta name="application-version" content="0.1.9">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=zodiak@500,700&display=swap" rel="stylesheet">
@@ -554,7 +554,7 @@ body {
 .detail-back { align-self:flex-start; background:transparent; color:var(--primary); border:0; font:inherit; font-weight:700; padding:8px 0; cursor:pointer; }
 .detail-directions { display:block; padding:12px; border-radius:9px; text-align:center; background:var(--primary); color:white; font-weight:700; text-decoration:none; }
 
-/* v0.1.8.1: map-first mobile controls; desktop layout remains unchanged. */
+/* v0.1.9: map-first mobile controls; desktop layout remains unchanged. */
 .mobile-filter-btn, .mobile-courts-btn, .mobile-sheet-close { display:none; }
 @media (max-width: 859px) {
   .app-header { padding: 5px 10px; }
@@ -585,6 +585,14 @@ body {
   .map-floating-controls { top:10px; right:10px; }
 }
 @media (prefers-reduced-motion: reduce) { .bottom-sheet { transition:none; } }
+
+.restroom-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border, #d6dedb); }
+.restroom-section h4 { margin: 0 0 8px; font-size: 1rem; }
+.restroom-section p { margin: 3px 0; font-size: .88rem; }
+.restroom-item { padding: 9px 0; border-bottom: 1px solid var(--border, #d6dedb); }
+.restroom-item strong { font-size: .92rem; }
+.restroom-item a, .restroom-section > a { display: inline-block; margin: 5px 0; color: var(--primary, #026b72); }
+.restroom-disclaimer { opacity: .78; }
 </style>
 </head>
 <body>
@@ -841,6 +849,79 @@ function renderSites() {
   });
 }
 
+
+// v0.1.9: NYC public restroom listings, fetched from NYC Open Data.
+// Distances are straight-line estimates, not walking routes. Operational status is not real-time.
+const RESTROOM_DATA_URL = 'https://data.cityofnewyork.us/resource/i7jb-7jku.json?$limit=2000';
+const RESTROOM_SOURCE_URL = 'https://data.cityofnewyork.us/d/i7jb-7jku';
+let restroomDataPromise = null;
+let selectedRestroomRequest = 0;
+function loadRestroomData() {
+  if (!restroomDataPromise) {
+    restroomDataPromise = fetch(RESTROOM_DATA_URL, { mode: 'cors' })
+      .then(response => { if (!response.ok) throw new Error('NYC Open Data unavailable'); return response.json(); })
+      .then(rows => rows.filter(row =>
+        String(row.status || '').trim().toLowerCase() === 'operational' &&
+        Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)) &&
+        row.latitude != null && row.longitude != null
+      ))
+      .catch(error => { restroomDataPromise = null; throw error; });
+  }
+  return restroomDataPromise;
+}
+function straightLineMeters(lat1, lng1, lat2, lng2) {
+  const radians = degrees => degrees * Math.PI / 180;
+  const dLat = radians(lat2 - lat1), dLng = radians(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function renderNearbyRestrooms(site, target, requestId) {
+  if (site.cat === 'indoor' || site.cat === 'candidate') return;
+  const heading = document.createElement('h4'); heading.textContent = '🚻 Nearby public restrooms';
+  const status = document.createElement('p'); status.textContent = 'Checking NYC Open Data…';
+  const source = document.createElement('a'); source.href = RESTROOM_SOURCE_URL;
+  source.target = '_blank'; source.rel = 'noopener noreferrer'; source.textContent = 'NYC public restroom data';
+  const note = document.createElement('p'); note.className = 'restroom-disclaimer';
+  note.textContent = 'Listed status is not live. Distances are straight-line estimates; walking access and hours may differ.';
+  target.append(heading, status, note, source);
+  loadRestroomData().then(rows => {
+    if (requestId !== selectedRestroomRequest || !target.isConnected) return;
+    const nearby = rows.map(row => ({row, distance: straightLineMeters(site.lat, site.lng, Number(row.latitude), Number(row.longitude))}))
+      .filter(item => item.distance <= 800).sort((a,b) => a.distance - b.distance).slice(0,3);
+    status.replaceChildren();
+    if (!nearby.length) {
+      status.textContent = 'No operational restroom listed within 800 m. This does not mean none exists.';
+      return;
+    }
+    for (const {row, distance} of nearby) {
+      const item = document.createElement('div'); item.className = 'restroom-item';
+      const name = document.createElement('strong'); name.textContent = row.facility_name || 'Public restroom';
+      const meta = document.createElement('p');
+      meta.textContent = `${Math.round(distance / 10) * 10} m away (straight line) · Listed operational`;
+      item.append(name, meta);
+      if (row.hours_of_operation) {
+        const hours = document.createElement('p'); hours.textContent = 'Hours listed: ' + row.hours_of_operation;
+        item.append(hours);
+      }
+      if (row.open) {
+        const season = document.createElement('p'); season.textContent = 'Seasonality: ' + row.open;
+        item.append(season);
+      }
+      if (row.accessibility) {
+        const access = document.createElement('p'); access.textContent = 'Accessibility: ' + row.accessibility;
+        item.append(access);
+      }
+      const link = document.createElement('a');
+      link.href = buildDirectionsUrl(Number(row.latitude), Number(row.longitude), row.facility_name || 'Public restroom');
+      link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Directions to restroom';
+      item.append(link); status.append(item);
+    }
+  }).catch(() => {
+    if (requestId === selectedRestroomRequest && target.isConnected)
+      status.textContent = 'Restroom listings could not be loaded. Use the NYC data link below.';
+  });
+}
+
 function selectCourt(site, marker, card) {
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('is-active'));
   if (card) card.classList.add('is-active');
@@ -859,6 +940,10 @@ function selectCourt(site, marker, card) {
   directions.textContent = '🧭 Directions'; directions.href = buildDirectionsUrl(site.lat, site.lng, site.name);
   directions.target = '_blank'; directions.rel = 'noopener noreferrer';
   details.append(back, title, category, address, hours, courts, directions);
+  const restroomSection = document.createElement('section');
+  restroomSection.className = 'restroom-section';
+  details.append(restroomSection);
+  renderNearbyRestrooms(site, restroomSection, ++selectedRestroomRequest);
   details.hidden = false;
   document.getElementById('sheetCardsContainer').hidden = true;
   if (window.innerWidth < 860) {
