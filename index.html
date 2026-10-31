@@ -9,6 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
+<meta name="application-version" content="0.1.7">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=zodiak@500,700&display=swap" rel="stylesheet">
@@ -328,16 +329,17 @@ body {
   z-index: 40;
   display: flex;
   flex-direction: column;
-  transform: translateY(calc(100% - 72px));
+  transform: translateY(calc(100% - 44px));
   transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.15);
 }
 
 .bottom-sheet.state-expanded { transform: translateY(0%); }
-.bottom-sheet.state-half { transform: translateY(40%); }
-.bottom-sheet.state-collapsed { transform: translateY(calc(100% - 72px)); }
+.bottom-sheet.state-half { transform: translateY(calc(100% - min(32dvh, 240px))); }
+.bottom-sheet.state-collapsed { transform: translateY(calc(100% - 44px)); }
 
 .sheet-handle-area {
-  padding: 8px 16px 6px;
+  padding: 5px 16px 5px;
+  min-height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -355,7 +357,7 @@ body {
   height: 4px;
   border-radius: 2px;
   background: var(--border);
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .sheet-header-info {
@@ -552,29 +554,8 @@ body {
 .detail-back { align-self:flex-start; background:transparent; color:var(--primary); border:0; font:inherit; font-weight:700; padding:8px 0; cursor:pointer; }
 .detail-directions { display:block; padding:12px; border-radius:9px; text-align:center; background:var(--primary); color:white; font-weight:700; text-decoration:none; }
 </style>
-<style>
-#basemapSetup { position:fixed; z-index:2000; top:76px; left:50%; transform:translateX(-50%); width:min(94vw,440px); padding:16px; border-radius:12px; border:1px solid #b4c5c7; background:#fff; color:#202a2c; box-shadow:0 5px 28px #0003; font:14px/1.5 Arial,sans-serif; }
-#basemapSetup[hidden] { display:none; }
-#mapSettingsBtn { font-size:12px; padding:7px 10px; }
-#basemapSetup a { color:#075c86; text-decoration:underline; }
-#basemapSetup input { width:100%; padding:10px; margin:8px 0; border:1px solid #888; border-radius:5px; font-size:14px; }
-#basemapSetup button { background:#026b72; color:#fff; padding:9px 16px; border:0; border-radius:5px; cursor:pointer; }
-#basemapStatus { color:#9a241a; }
-</style>
 </head>
 <body>
-<section id="basemapSetup" role="region" aria-label="Map background setup" hidden>
-  <strong>Enable the PickleLook map background</strong>
-  <p>OpenStreetMap blocked the old tile source. CARTO offers a free map key. <a href="https://carto.com/basemaps/apikey/" target="_blank" rel="noopener noreferrer">Get your free CARTO key here</a>, then paste it below. No Python or server needed.</p>
-  <label for="basemapKey">CARTO basemap API key</label>
-  <input id="basemapKey" type="text" autocomplete="off" spellcheck="false" placeholder="Paste CARTO API key">
-  <button id="basemapApply" type="button">Load map background</button>
-  <button id="basemapClose" type="button">Close</button>
-  <p id="basemapStatus" role="status"></p>
-  <small>The key is stored only in this browser when permitted. Do not publish a private/restricted key in a shared HTML file.</small>
-</section>
-
-
 <header class="app-header">
   <div class="app-brand">
     <div class="app-logo">🎾</div>
@@ -584,7 +565,6 @@ body {
     </div>
   </div>
   <div class="header-tools">
-    <button class="action-btn" id="mapSettingsBtn" type="button" aria-controls="basemapSetup" aria-expanded="false">Map Settings</button>
     <button class="action-btn" id="themeToggleBtn" aria-label="Toggle Dark Mode">◐</button>
   </div>
 </header>
@@ -627,11 +607,11 @@ body {
   </div>
 
   <div class="bottom-sheet state-collapsed" id="courtSheet">
-    <div class="sheet-handle-area" id="sheetHandle">
+    <div class="sheet-handle-area" id="sheetHandle" aria-label="Toggle court list panel">
       <div class="sheet-pill-bar"></div>
       <div class="sheet-header-info">
         <span class="sheet-count" id="sheetResultsCount">Showing all locations</span>
-        <button class="sheet-toggle-text" id="sheetToggleBtn">Expand List ▲</button>
+        <button class="sheet-toggle-text" id="sheetToggleBtn" type="button">Expand List ▲</button>
       </div>
     </div>
     <div class="sheet-scroll-content" id="sheetCardsContainer"></div>
@@ -685,12 +665,7 @@ function initializeCourtCounts() {
 }
 initializeCourtCounts();
 if (typeof window.L === 'undefined') {
-  const status = document.getElementById('basemapStatus');
-  document.getElementById('basemapSetup').hidden = false;
-  status.textContent = 'The Leaflet mapping library could not load. Check your internet connection or browser extensions, then reload.';
-  document.getElementById('basemapApply').addEventListener('click', () => {
-    status.textContent = 'Cannot load map: Leaflet is unavailable. Please reload with an internet connection.';
-  });
+  document.getElementById('mapView').textContent = 'Map unavailable. Check your internet connection or browser extensions, then reload.';
   throw new Error('Leaflet library unavailable; court data remains intact.');
 }
 
@@ -702,62 +677,21 @@ const map = L.map('mapView', {
 
 L.control.zoom({ position: 'topleft' }).addTo(map);
 
-// CARTO map key is retained in browser storage. The setup panel is only shown
-// when needed, or when the visitor explicitly opens Map Settings.
-let pickleLookBasemap = null;
-const basemapSetup = document.getElementById('basemapSetup');
-const basemapKeyInput = document.getElementById('basemapKey');
-const basemapStatus = document.getElementById('basemapStatus');
-const mapSettingsBtn = document.getElementById('mapSettingsBtn');
-function showBasemapSetup(show) {
-  basemapSetup.hidden = !show;
-  mapSettingsBtn.setAttribute('aria-expanded', String(show));
-}
-mapSettingsBtn.addEventListener('click', () => showBasemapSetup(basemapSetup.hidden));
-document.getElementById('basemapClose').addEventListener('click', () => showBasemapSetup(false));
-function setPickleLookBasemap(key) {
-  const cleaned = String(key || '').trim();
-  if (!cleaned) return false;
-  if (pickleLookBasemap) map.removeLayer(pickleLookBasemap);
-  const layer = L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=' + encodeURIComponent(cleaned), {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, &copy; <a href="https://carto.com/attribution/">CARTO</a>'
-  });
-  pickleLookBasemap = layer;
-  let loaded = false;
-  layer.on('tileload', () => {
-    if (pickleLookBasemap !== layer) return;
-    loaded = true;
-    basemapStatus.textContent = 'Map background loaded successfully.';
-    showBasemapSetup(false);
-  });
-  layer.on('tileerror', () => {
-    if (pickleLookBasemap !== layer || loaded) return;
-    basemapStatus.textContent = 'Map tiles failed to load. Check your CARTO key and internet connection.';
-    showBasemapSetup(true);
-  });
-  basemapStatus.textContent = 'Loading map tiles…';
-  layer.addTo(map);
-  return true;
-}
-document.getElementById('basemapApply').addEventListener('click', () => {
-  if (setPickleLookBasemap(basemapKeyInput.value)) {
-    try { localStorage.setItem('picklelook_carto_key', basemapKeyInput.value.trim()); } catch (_) {}
-  } else {
-    basemapStatus.textContent = 'Please enter your CARTO API key.';
-    showBasemapSetup(true);
+// Public, domain-restricted CARTO browser key. Browser keys cannot be kept secret
+// in a static GitHub Pages site. Keep domain restrictions enabled at CARTO.
+const publicCartoKey = 'cb1_4ywu_1_50949fa8b7fec330831ac23a';
+const pickleLookBasemap = L.tileLayer(
+  'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=' + encodeURIComponent(publicCartoKey),
+  { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, &copy; <a href="https://carto.com/attribution/">CARTO</a>' }
+);
+let tileErrorShown = false;
+pickleLookBasemap.on('tileerror', () => {
+  if (!tileErrorShown) {
+    tileErrorShown = true;
+    showToast('Map background unavailable. Check your connection.');
   }
 });
-// Public browser-side CARTO key. Visible in page source; restrict at provider.
-const publicCartoKey = 'cb1_4ywu_1_50949fa8b7fec330831ac23a';
-let savedKey = publicCartoKey;
-try { savedKey = localStorage.getItem('picklelook_carto_key') || publicCartoKey; } catch (_) {}
-if (savedKey) {
-  basemapKeyInput.value = savedKey;
-  setPickleLookBasemap(savedKey);
-} else {
-  showBasemapSetup(true);
-}
+pickleLookBasemap.addTo(map);
 
 function showToast(msg) {
   const toast = document.getElementById('toastNotice');
@@ -877,7 +811,7 @@ function selectCourt(site, marker, card) {
   details.replaceChildren();
   const back = document.createElement('button');
   back.type = 'button'; back.className = 'detail-back'; back.textContent = '← Back to courts';
-  back.onclick = () => { details.hidden = true; document.getElementById('sheetCardsContainer').hidden = false; setSheetState('state-half'); };
+  back.onclick = () => { details.hidden = true; document.getElementById('sheetCardsContainer').hidden = false; setSheetState(window.innerWidth < 860 ? 'state-half' : 'state-expanded'); };
   const title = document.createElement('h3'); title.textContent = site.name;
   const category = document.createElement('p'); category.textContent = conf.label + ' · ' + site.neighborhood + ', ' + site.borough;
   const address = document.createElement('p'); address.textContent = site.address;
@@ -923,7 +857,24 @@ sheetToggleBtn.onclick = () => {
   }
 };
 
+// Mobile swipe gestures on the handle: swipe down to reveal more map,
+// swipe up to reveal more court details. No interference with map gestures.
+let sheetTouchStartY = null;
+sheetHandle.addEventListener('touchstart', e => {
+  sheetTouchStartY = e.touches[0]?.clientY ?? null;
+}, { passive: true });
+sheetHandle.addEventListener('touchend', e => {
+  if (window.innerWidth >= 860 || sheetTouchStartY === null) return;
+  const delta = (e.changedTouches[0]?.clientY ?? sheetTouchStartY) - sheetTouchStartY;
+  sheetTouchStartY = null;
+  if (Math.abs(delta) < 35) return;
+  sheet.dataset.ignoreNextClick = 'true';
+  if (delta > 0) setSheetState('state-collapsed');
+  else setSheetState('state-expanded');
+}, { passive: true });
+
 sheetHandle.onclick = (e) => {
+  if (sheet.dataset.ignoreNextClick === 'true') { delete sheet.dataset.ignoreNextClick; return; }
   if (e.target === sheetToggleBtn) return;
   if (window.innerWidth >= 860) return;
   if (sheet.classList.contains('state-collapsed')) {
