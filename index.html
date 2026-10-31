@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.1.8">
+<meta name="application-version" content="0.1.8.1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=zodiak@500,700&display=swap" rel="stylesheet">
@@ -554,7 +554,7 @@ body {
 .detail-back { align-self:flex-start; background:transparent; color:var(--primary); border:0; font:inherit; font-weight:700; padding:8px 0; cursor:pointer; }
 .detail-directions { display:block; padding:12px; border-radius:9px; text-align:center; background:var(--primary); color:white; font-weight:700; text-decoration:none; }
 
-/* v0.1.8: map-first mobile controls; desktop layout remains unchanged. */
+/* v0.1.8.1: map-first mobile controls; desktop layout remains unchanged. */
 .mobile-filter-btn, .mobile-courts-btn, .mobile-sheet-close { display:none; }
 @media (max-width: 859px) {
   .app-header { padding: 5px 10px; }
@@ -887,7 +887,10 @@ mobileCourtsBtn.onclick = () => {
   document.getElementById('sheetCardsContainer').hidden = false;
   setSheetState('state-expanded');
 };
-document.getElementById('mobileSheetClose').onclick = () => setSheetState('state-collapsed');
+document.getElementById('mobileSheetClose').onclick = (event) => {
+  event.stopPropagation(); // Prevent the parent sheet handle from immediately reopening it.
+  setSheetState('state-collapsed');
+};
 
 
 function setSheetState(state) {
@@ -907,7 +910,8 @@ function setSheetState(state) {
   }
 }
 
-sheetToggleBtn.onclick = () => {
+sheetToggleBtn.onclick = (event) => {
+  event.stopPropagation(); // Do not also trigger the parent handle's click action.
   if (sheet.classList.contains('state-expanded')) {
     setSheetState('state-collapsed');
   } else {
@@ -933,7 +937,7 @@ sheetHandle.addEventListener('touchend', e => {
 
 sheetHandle.onclick = (e) => {
   if (sheet.dataset.ignoreNextClick === 'true') { delete sheet.dataset.ignoreNextClick; return; }
-  if (e.target === sheetToggleBtn) return;
+  if (e.target.closest('button')) return; // Header buttons own their clicks.
   if (window.innerWidth >= 860) return;
   if (sheet.classList.contains('state-collapsed')) {
     setSheetState('state-half');
