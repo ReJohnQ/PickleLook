@@ -2,14 +2,14 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#ffffff" id="themeMetaColor">
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.1.7">
+<meta name="application-version" content="0.1.8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=zodiak@500,700&display=swap" rel="stylesheet">
@@ -553,6 +553,38 @@ body {
 .selected-court-details p { margin:2px 0; line-height:1.5; }
 .detail-back { align-self:flex-start; background:transparent; color:var(--primary); border:0; font:inherit; font-weight:700; padding:8px 0; cursor:pointer; }
 .detail-directions { display:block; padding:12px; border-radius:9px; text-align:center; background:var(--primary); color:white; font-weight:700; text-decoration:none; }
+
+/* v0.1.8: map-first mobile controls; desktop layout remains unchanged. */
+.mobile-filter-btn, .mobile-courts-btn, .mobile-sheet-close { display:none; }
+@media (max-width: 859px) {
+  .app-header { padding: 5px 10px; }
+  .app-logo { width:30px; height:30px; }
+  .app-tagline { font-size:0.62rem; }
+  .controls-panel { padding: 7px 9px; gap: 0; }
+  .search-bar-row { gap: 6px; }
+  .search-input-wrap input, .gps-btn { height:44px; }
+  .gps-btn { padding: 0 9px; }
+  .mobile-filter-btn { display:inline-flex; min-height:44px; min-width:44px; padding:0 9px; }
+  .controls-panel:not(.mobile-filters-open) .filters-scroll { display:none; }
+  .controls-panel.mobile-filters-open .filters-scroll { margin-top:9px; }
+  .filters-scroll .chip { min-height:44px; border-radius:22px; }
+  .mobile-courts-btn { display:block; position:absolute; left:50%; bottom:calc(16px + var(--safe-bottom)); transform:translateX(-50%); z-index:35; border:1px solid var(--border); background:var(--surface); color:var(--text); border-radius:26px; padding:12px 20px; min-height:48px; font:inherit; font-size:0.87rem; font-weight:800; box-shadow:var(--shadow-md); white-space:nowrap; cursor:pointer; }
+  .mobile-courts-btn[hidden] { display:none; }
+  .mobile-sheet-close { display:grid; place-items:center; min-width:44px; min-height:44px; border:0; border-radius:22px; background:var(--surface); color:var(--text); font-size:22px; cursor:pointer; }
+  .bottom-sheet { height:min(78dvh, 680px); border-radius:18px 18px 0 0; }
+  .bottom-sheet.state-collapsed { transform:translateY(100%); visibility:hidden; pointer-events:none; }
+  .bottom-sheet.state-half { transform:translateY(calc(100% - min(34dvh, 255px))); }
+  .bottom-sheet.state-expanded { transform:translateY(0); }
+  .sheet-handle-area { flex-direction:row; padding:5px 10px 5px 14px; min-height:52px; gap:8px; }
+  .sheet-pill-bar { display:none; }
+  .sheet-count { font-size:0.83rem; }
+  .sheet-toggle-text { min-height:44px; padding:0 8px; }
+  .sheet-scroll-content { overscroll-behavior:contain; }
+  .selected-court-details { padding:10px 16px calc(18px + var(--safe-bottom)); }
+  .map-court-pin { width:34px; height:34px; }
+  .map-floating-controls { top:10px; right:10px; }
+}
+@media (prefers-reduced-motion: reduce) { .bottom-sheet { transition:none; } }
 </style>
 </head>
 <body>
@@ -577,6 +609,7 @@ body {
       <button class="search-clear-btn" id="searchClearBtn">✕</button>
     </div>
     <button class="gps-btn" id="nearMeBtn">📍 Near Me</button>
+    <button class="action-btn mobile-filter-btn" id="mobileFilterBtn" aria-label="Show court filters" aria-expanded="false" aria-controls="boroughChips typeChips" type="button">☷ Filters</button>
   </div>
 
   <div class="filters-scroll" id="boroughChips">
@@ -606,12 +639,15 @@ body {
     <button class="fab-btn" id="recenterBtn" title="Fit All Courts">🎯</button>
   </div>
 
+  <button class="mobile-courts-btn" id="mobileCourtsBtn" type="button" aria-controls="courtSheet" aria-expanded="false">☰ View Courts</button>
+
   <div class="bottom-sheet state-collapsed" id="courtSheet">
     <div class="sheet-handle-area" id="sheetHandle" aria-label="Toggle court list panel">
       <div class="sheet-pill-bar"></div>
       <div class="sheet-header-info">
         <span class="sheet-count" id="sheetResultsCount">Showing all locations</span>
         <button class="sheet-toggle-text" id="sheetToggleBtn" type="button">Expand List ▲</button>
+        <button class="mobile-sheet-close" id="mobileSheetClose" type="button" aria-label="Close court panel">×</button>
       </div>
     </div>
     <div class="sheet-scroll-content" id="sheetCardsContainer"></div>
@@ -747,6 +783,8 @@ function renderSites() {
   currentMarkers = [];
 
   const visible = getFilteredSites();
+  const mobileCourtsBtn = document.getElementById('mobileCourtsBtn');
+  mobileCourtsBtn.textContent = `☰ View ${visible.length} Courts`;
   const container = document.getElementById('sheetCardsContainer');
   container.innerHTML = '';
   document.getElementById("selectedCourtDetails").hidden = true;
@@ -811,7 +849,7 @@ function selectCourt(site, marker, card) {
   details.replaceChildren();
   const back = document.createElement('button');
   back.type = 'button'; back.className = 'detail-back'; back.textContent = '← Back to courts';
-  back.onclick = () => { details.hidden = true; document.getElementById('sheetCardsContainer').hidden = false; setSheetState(window.innerWidth < 860 ? 'state-half' : 'state-expanded'); };
+  back.onclick = () => { details.hidden = true; document.getElementById('sheetCardsContainer').hidden = false; setSheetState('state-expanded'); };
   const title = document.createElement('h3'); title.textContent = site.name;
   const category = document.createElement('p'); category.textContent = conf.label + ' · ' + site.neighborhood + ', ' + site.borough;
   const address = document.createElement('p'); address.textContent = site.address;
@@ -836,10 +874,30 @@ function selectCourt(site, marker, card) {
 const sheet = document.getElementById('courtSheet');
 const sheetHandle = document.getElementById('sheetHandle');
 const sheetToggleBtn = document.getElementById('sheetToggleBtn');
+const mobileCourtsBtn = document.getElementById('mobileCourtsBtn');
+const mobileFilterBtn = document.getElementById('mobileFilterBtn');
+const controlsPanel = document.querySelector('.controls-panel');
+mobileFilterBtn.onclick = () => {
+  const open = controlsPanel.classList.toggle('mobile-filters-open');
+  mobileFilterBtn.setAttribute('aria-expanded', String(open));
+  mobileFilterBtn.setAttribute('aria-label', open ? 'Hide court filters' : 'Show court filters');
+};
+mobileCourtsBtn.onclick = () => {
+  document.getElementById('selectedCourtDetails').hidden = true;
+  document.getElementById('sheetCardsContainer').hidden = false;
+  setSheetState('state-expanded');
+};
+document.getElementById('mobileSheetClose').onclick = () => setSheetState('state-collapsed');
+
 
 function setSheetState(state) {
   sheet.classList.remove('state-expanded', 'state-half', 'state-collapsed');
   sheet.classList.add(state);
+  const mobileOpen = window.innerWidth < 860 && state !== 'state-collapsed';
+  mobileCourtsBtn.hidden = mobileOpen;
+  mobileCourtsBtn.setAttribute('aria-expanded', String(mobileOpen));
+  if (window.innerWidth < 860) sheet.setAttribute('aria-hidden', String(!mobileOpen));
+  else sheet.removeAttribute('aria-hidden');
   if (state === 'state-expanded') {
     sheetToggleBtn.textContent = 'Collapse List ▼';
   } else if (state === 'state-collapsed') {
@@ -967,8 +1025,17 @@ themeToggleBtn.onclick = () => {
   themeMeta.setAttribute('content', isDark ? '#ffffff' : '#121211');
 };
 
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 860) {
+    sheet.removeAttribute('aria-hidden');
+    mobileCourtsBtn.hidden = false;
+  } else {
+    setSheetState('state-collapsed');
+  }
+});
 updateBadgeCounts();
 renderSites();
+setSheetState('state-collapsed');
 </script>
 </body>
 </html>
