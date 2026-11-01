@@ -641,6 +641,16 @@ body {
   .map-floating-controls { top:10px; right:10px; }
 }
 @media (max-width:390px) { .mobile-active-filters:not([hidden]) { font-size:.72rem; } }
+
+/* v0.2.1.7: map-first mobile discovery; search remains available on demand. */
+.mobile-search-toggle { display:none; }
+@media (max-width:859px) {
+  .mobile-search-toggle { display:inline-flex; flex:none; width:44px; height:44px; min-width:44px; font-size:18px; }
+  .search-bar-row .search-input-wrap { display:none; }
+  .search-bar-row.mobile-search-open { flex-wrap:wrap; }
+  .search-bar-row.mobile-search-open .search-input-wrap { display:flex; order:5; flex:0 0 100%; min-width:0; margin-top:3px; }
+  .mobile-search-toggle[aria-expanded="true"] { background:var(--surface-subtle); color:var(--primary); }
+}
 </style>
 </head>
 <body>
@@ -659,6 +669,7 @@ body {
 
 <div class="controls-panel">
   <div class="search-bar-row">
+    <button class="action-btn mobile-search-toggle" id="mobileSearchToggle" type="button" aria-label="Open court search" aria-expanded="false" aria-controls="courtSearchInput" title="Search courts">🔍</button>
     <div class="search-input-wrap">
       <span class="search-leading-icon">🔍</span>
       <input type="search" id="courtSearchInput" placeholder="Search parks, neighborhoods, addresses...">
@@ -1155,6 +1166,27 @@ document.querySelectorAll('#typeChips .chip').forEach(btn => {
 
 const searchInput = document.getElementById('courtSearchInput');
 const clearBtn = document.getElementById('searchClearBtn');
+
+// v0.2.1.7: preserve desktop search and mobile search behavior behind a compact toggle.
+const mobileSearchToggle = document.getElementById('mobileSearchToggle');
+const mobileSearchRow = mobileSearchToggle.closest('.search-bar-row');
+function setMobileSearchOpen(open) {
+  mobileSearchRow.classList.toggle('mobile-search-open', open);
+  mobileSearchToggle.setAttribute('aria-expanded', String(open));
+  mobileSearchToggle.setAttribute('aria-label', open ? 'Close court search' : 'Open court search');
+  mobileSearchToggle.title = open ? 'Close search' : 'Search courts';
+  if (open) searchInput.focus();
+  else if (document.activeElement === searchInput) mobileSearchToggle.focus();
+}
+mobileSearchToggle.addEventListener('click', () => {
+  setMobileSearchOpen(!mobileSearchRow.classList.contains('mobile-search-open'));
+});
+searchInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && window.matchMedia('(max-width:859px)').matches) {
+    setMobileSearchOpen(false);
+  }
+});
+
 
 let searchRenderTimer = null;
 searchInput.oninput = (e) => {
