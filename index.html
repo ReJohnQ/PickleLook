@@ -671,7 +671,7 @@ body {
     <button class="chip" data-type="active" aria-pressed="false"><span class="filter-pin" style="--pin:#2b8a3e">O</span> Outdoor</button>
     <button class="chip" data-type="byon" aria-pressed="false"><span class="filter-pin" style="--pin:#1971c2">B</span> Bring Your Own Net</button>
     <button class="chip" data-type="indoor" aria-pressed="false"><span class="filter-pin" style="--pin:#d6336c">I</span> Indoor · Rec Centers</button>
-    <button class="chip" data-type="scheduled" aria-pressed="false"><span class="filter-pin" style="--pin:#7048e8">S</span> Scheduled / Pop-up</button>
+    <button class="chip" data-type="scheduled" aria-pressed="false"><span class="filter-pin" style="--pin:#7048e8">M</span> Mixed Use / Pop-up</button>
   </div>
 </div>
 
@@ -719,8 +719,8 @@ const typeConfig = {
   "active": { label: "Outdoor", color: "#2b8a3e", symbol: "O" },
   "byon": { label: "Bring Your Own Net", color: "#1971c2", symbol: "B" },
   "indoor": { label: "Indoor", color: "#d6336c", symbol: "I" },
-  "scheduled": { label: "School / Mixed · Scheduled", color: "#7048e8", symbol: "S" },
-  "interim": { label: "Pop-up / Temporary", color: "#7048e8", symbol: "S" }
+  "scheduled": { label: "Mixed Use · Scheduled", color: "#7048e8", symbol: "M" },
+  "interim": { label: "Pop-up / Temporary", color: "#7048e8", symbol: "M" }
 };
 
 const boroughCenters = {
@@ -1082,7 +1082,7 @@ sheetHandle.onclick = (e) => {
 function updateMobileFilterStatus() {
   const names = [];
   if (activeBorough !== 'all') names.push(activeBorough);
-  if (activeType !== 'all') names.push(({active:'Outdoor',byon:'Bring Your Own Net',indoor:'Indoor · Rec Centers',scheduled:'Scheduled / Pop-up'})[activeType] || activeType);
+  if (activeType !== 'all') names.push(({active:'Outdoor',byon:'Bring Your Own Net',indoor:'Indoor · Rec Centers',scheduled:'Mixed Use / Pop-up'})[activeType] || activeType);
   const indicator = document.getElementById('mobileActiveFilters');
   indicator.hidden = names.length === 0;
   document.getElementById('activeFiltersText').textContent = names.join(' · ');
