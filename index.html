@@ -598,6 +598,19 @@ body {
 .closest-result { display:flex; flex-direction:column; align-items:flex-start; gap:5px; width:100%; padding:13px 14px; border:0; border-bottom:1px solid var(--border); background:var(--surface); color:var(--text); text-align:left; cursor:pointer; min-height:56px; font:inherit; }
 .closest-result span { font-size:.82rem; opacity:.8; }
 .closest-result:focus-visible { outline:3px solid var(--primary); outline-offset:-3px; }
+/* v0.2.1: compact filter status, persistent GPS access, and mobile touch targets */
+.mobile-gps-fab, .mobile-active-filters { display:none; }
+@media (max-width:859px) {
+  .mobile-gps-fab { display:grid; font-size:25px; font-weight:800; color:var(--primary); }
+  .mobile-active-filters:not([hidden]) { display:flex; align-items:center; gap:8px; min-height:34px; padding:5px 2px 0; font-size:.76rem; font-weight:700; color:var(--text-muted); }
+  #activeFiltersText { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+  #clearActiveFiltersBtn { flex:none; min-width:44px; min-height:36px; padding:0 9px; border:1px solid var(--border); background:var(--surface-subtle); border-radius:18px; color:var(--primary); font:inherit; cursor:pointer; }
+  .search-clear-btn { width:36px; height:36px; right:4px; }
+  .nav-app-btn { min-height:44px; align-items:center; padding:7px 10px; }
+  .detail-back { min-height:44px; }
+  .map-floating-controls { top:10px; right:10px; }
+}
+@media (max-width:390px) { .mobile-active-filters:not([hidden]) { font-size:.72rem; } }
 </style>
 </head>
 <body>
@@ -626,6 +639,8 @@ body {
     <button class="action-btn mobile-filter-btn" id="mobileFilterBtn" aria-label="Show court filters" aria-expanded="false" aria-controls="boroughChips typeChips" type="button">☷ Filters</button>
   </div>
 
+  <div class="mobile-active-filters" id="mobileActiveFilters" hidden aria-live="polite"><span id="activeFiltersText"></span><button type="button" id="clearActiveFiltersBtn" aria-label="Clear court filters">Clear</button></div>
+
   <div class="filters-scroll" id="boroughChips">
     <button class="chip active" data-borough="all">All NYC <span class="chip-badge" id="badgeAll">0</span></button>
     <button class="chip" data-borough="Manhattan">Manhattan <span class="chip-badge" id="badgeMan">0</span></button>
@@ -648,7 +663,8 @@ body {
   <div id="mapView"></div>
 
   <div class="map-floating-controls">
-    <button class="fab-btn" id="recenterBtn" title="Fit All Courts">🎯</button>
+    <button class="fab-btn" id="recenterBtn" title="Fit All Courts" aria-label="Fit all filtered courts">🎯</button>
+    <button class="fab-btn mobile-gps-fab" id="floatingGpsBtn" type="button" title="Find my location" aria-label="Find my location">◎</button>
   </div>
 
   <button class="mobile-courts-btn" id="mobileCourtsBtn" type="button" aria-controls="courtSheet" aria-expanded="false">☰ View Courts</button>
@@ -1047,6 +1063,33 @@ sheetHandle.onclick = (e) => {
   }
 };
 
+function updateMobileFilterStatus() {
+  const names = [];
+  if (activeBorough !== 'all') names.push(activeBorough);
+  if (activeType !== 'all') names.push(({active:'Outdoor',byon:'Bring Your Own Net',indoor:'Indoor · Rec Centers',scheduled:'Scheduled / Pop-up'})[activeType] || activeType);
+  const indicator = document.getElementById('mobileActiveFilters');
+  indicator.hidden = names.length === 0;
+  document.getElementById('activeFiltersText').textContent = names.join(' · ');
+}
+function resetAllCourtFilters() {
+  activeBorough = 'all';
+  activeType = 'all';
+  document.querySelectorAll('#boroughChips .chip').forEach(b => {
+    const selected = b.dataset.borough === 'all';
+    b.classList.toggle('active', selected);
+    b.setAttribute('aria-pressed', String(selected));
+  });
+  document.querySelectorAll('#typeChips .chip').forEach(b => {
+    const selected = b.dataset.type === 'all';
+    b.classList.toggle('active', selected);
+    b.setAttribute('aria-pressed', String(selected));
+  });
+  updateMobileFilterStatus();
+  renderSites();
+  map.flyTo(boroughCenters.all.center, boroughCenters.all.zoom, { duration:0.6 });
+}
+document.getElementById('clearActiveFiltersBtn').onclick = resetAllCourtFilters;
+
 document.querySelectorAll('#boroughChips .chip').forEach(btn => {
   btn.onclick = () => {
     const requestedBorough = btn.dataset.borough;
@@ -1057,6 +1100,7 @@ document.querySelectorAll('#boroughChips .chip').forEach(btn => {
       b.classList.toggle('active', selected);
       b.setAttribute('aria-pressed', String(selected));
     });
+    updateMobileFilterStatus();
     renderSites();
     if (boroughCenters[activeBorough]) {
       map.flyTo(boroughCenters[activeBorough].center, boroughCenters[activeBorough].zoom, { duration: 0.7 });
@@ -1074,6 +1118,7 @@ document.querySelectorAll('#typeChips .chip').forEach(btn => {
       b.classList.toggle('active', selected);
       b.setAttribute('aria-pressed', String(selected));
     });
+    updateMobileFilterStatus();
     renderSites();
   };
 });
@@ -1081,20 +1126,23 @@ document.querySelectorAll('#typeChips .chip').forEach(btn => {
 const searchInput = document.getElementById('courtSearchInput');
 const clearBtn = document.getElementById('searchClearBtn');
 
+let searchRenderTimer = null;
 searchInput.oninput = (e) => {
   searchQuery = e.target.value.trim();
   clearBtn.style.display = searchQuery ? 'grid' : 'none';
-  renderSites();
+  clearTimeout(searchRenderTimer);
+  searchRenderTimer = setTimeout(renderSites, 160);
 };
 
 clearBtn.onclick = () => {
+  clearTimeout(searchRenderTimer);
   searchInput.value = '';
   searchQuery = '';
   clearBtn.style.display = 'none';
   renderSites();
 };
 
-document.getElementById('nearMeBtn').onclick = () => {
+function locateUser() {
   if (!navigator.geolocation) {
     showToast("Geolocation not supported on this device.");
     return;
@@ -1123,7 +1171,9 @@ document.getElementById('nearMeBtn').onclick = () => {
     },
     { enableHighAccuracy: true, timeout: 8000 }
   );
-};
+}
+document.getElementById('nearMeBtn').onclick = locateUser;
+document.getElementById('floatingGpsBtn').onclick = locateUser;
 
 // Straight-line distance, not walking, cycling, or driving distance.
 function distanceMeters(lat1, lon1, lat2, lon2) {
