@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.37">
+<meta name="application-version" content="0.2.2.39">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -28,6 +28,7 @@
   --bg: #f8f7f4;
   --surface: #ffffff;
   --surface-subtle: #f3f1ec;
+  --restrooms-border: #2563eb;
   --surface-elevated: #ffffff;
   --text: #1c1b18;
   --text-muted: #6b675e;
@@ -49,6 +50,7 @@
   --bg: #121211;
   --surface: #1c1c1a;
   --surface-subtle: #252422;
+  --restrooms-border: #8ab4ff;
   --surface-elevated: #282724;
   --text: #edeae4;
   --text-muted: #9e9a91;
@@ -321,6 +323,7 @@ body {
   cursor: pointer;
 }
 .restroom-toggle { display:inline-flex; width:auto; min-height:44px; padding:0 9px; gap:5px; align-items:center; justify-content:center; border-radius:22px; border:1px solid var(--border); background:var(--surface); color:var(--text); font:inherit; font-size:.78rem; font-weight:700; cursor:pointer; box-shadow:var(--shadow-md); }
+.restroom-toggle { border-color:var(--restrooms-border); }
 .restroom-mobile-lines { display:none; }
 .restroom-symbol { width:22px; height:22px; flex:none; fill:currentColor; }
 .restroom-toggle[aria-pressed="true"] { background:#345ba5; color:#fff; }
@@ -824,9 +827,9 @@ body {
   #nearMeBtn[aria-pressed="true"] { --control-fill:var(--primary); background:transparent; }
   .search-bar-row > button[aria-expanded="true"] { --control-border:var(--primary); background:transparent; }
   .mobile-courts-btn { padding-inline:7px; }
-  .map-floating-controls .restroom-toggle { padding:2px 5px; }
+  .map-floating-controls .restroom-toggle { padding:2px 5px; --control-border:var(--restrooms-border); }
   .map-floating-controls .restroom-toggle[aria-pressed="true"] {
-    --control-fill:#345ba5; --control-border:#345ba5; background:transparent;
+    --control-fill:#345ba5; background:transparent;
   }
   .map-floating-controls .restroom-label > span { font:inherit; }
   .restroom-mobile-lines { display:grid; justify-items:center; gap:0; }
@@ -952,7 +955,7 @@ body {
   <div id="mapView"></div>
 
   <div class="map-floating-controls">
-    <button class="restroom-toggle" id="restroomToggle" type="button" aria-label="Restrooms" title="Restrooms" aria-pressed="false">
+    <button class="restroom-toggle" id="restroomToggle" type="button" aria-label="RestRooms" title="RestRooms" aria-pressed="false">
       <svg class="restroom-symbol" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <defs>
           <g id="restroomSymbol">
@@ -965,8 +968,8 @@ body {
         </defs>
         <use href="#restroomSymbol"></use>
       </svg>
-      <span class="restroom-desktop-label" aria-hidden="true">Restrooms</span>
-      <span class="restroom-label restroom-mobile-lines" aria-hidden="true"><span>Rest</span><span>Room</span></span>
+      <span class="restroom-desktop-label" aria-hidden="true">RestRooms</span>
+      <span class="restroom-label restroom-mobile-lines" aria-hidden="true"><span>Rest</span><span>Rooms</span></span>
     </button>
     <button class="fab-btn" id="recenterBtn" title="Fit All Courts" aria-label="Fit all filtered courts">🎯</button>
     <button class="fab-btn mobile-gps-fab" id="floatingGpsBtn" type="button" title="Find my location" aria-label="Near Me" aria-pressed="false">◎</button>
@@ -1028,6 +1031,10 @@ let userLocationMarker = null;
 let userCoords = null;
 let locationRequest = 0;
 let locationPending = false;
+let locationWatchId = null;
+let locationTimer = null;
+const nearMeMaxAccuracyMeters = 150;
+const nearMeWaitMs = 12000;
 const markerById = new Map();
 
 // Court counts and key feedback must work even if the mapping library fails.
@@ -1571,15 +1578,25 @@ function updateLocationControls() {
   floatingGpsBtn.setAttribute('aria-pressed', String(active));
 }
 
-function resetLocation() {
+function stopLocationRequest() {
   ++locationRequest;
   locationPending = false;
+  clearTimeout(locationTimer);
+  locationTimer = null;
+  if (locationWatchId !== null) {
+    navigator.geolocation.clearWatch(locationWatchId);
+    locationWatchId = null;
+  }
+  updateLocationControls();
+}
+
+function resetLocation() {
   userCoords = null;
+  stopLocationRequest();
   if (userLocationMarker) {
     map.removeLayer(userLocationMarker);
     userLocationMarker = null;
   }
-  updateLocationControls();
   renderLocationResults();
 }
 
@@ -1596,8 +1613,9 @@ function fitCurrentMap() {
 
 function locateUser() {
   if (locationPending || userCoords) {
+    const wasLocated = Boolean(userCoords);
     resetLocation();
-    fitCurrentMap();
+    if (wasLocated) fitCurrentMap();
     showToast('Near Me off');
     return;
   }
@@ -1610,14 +1628,31 @@ function locateUser() {
   locationPending = true;
   updateLocationControls();
   showToast("Locating your position...");
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
+  let receivedApproximateFix = false;
+  const fail = (message) => {
+    if (request !== locationRequest) return;
+    stopLocationRequest();
+    showToast(message);
+  };
+
+  locationTimer = setTimeout(() => {
+    fail(receivedApproximateFix
+      ? 'Location is too approximate. Allow Precise location for your browser and try again.'
+      : 'Could not get your location. Check that Location is on and try again.');
+  }, nearMeWaitMs);
+
+  locationWatchId = navigator.geolocation.watchPosition(
+    ({ coords }) => {
       if (request !== locationRequest) return;
-      locationPending = false;
-      const { latitude: lat, longitude: lng } = pos.coords;
+      const { latitude: lat, longitude: lng, accuracy } = coords;
+      if (!Number.isFinite(accuracy) || accuracy <= 0 || accuracy > nearMeMaxAccuracyMeters) {
+        if (!receivedApproximateFix) showToast('Waiting for a more accurate location…');
+        receivedApproximateFix = true;
+        return;
+      }
       userCoords = { lat, lng };
+      stopLocationRequest();
       trackPickleLook("near_me_success");
-      updateLocationControls();
       renderLocationResults();
       map.flyTo([lat, lng], 14, { duration: 0.9 });
       userLocationMarker = L.circleMarker([lat, lng], {
@@ -1627,16 +1662,13 @@ function locateUser() {
         weight: 3,
         opacity: 1,
         fillOpacity: 0.95
-      }).addTo(map).bindPopup("<b>📍 You are here</b>");
-      showToast("Found your location!");
+      }).addTo(map).bindPopup(`<b>📍 Your location</b><br>Estimated accuracy: ±${Math.round(accuracy)} m`);
+      showToast('Found your location');
     },
-    () => {
-      if (request !== locationRequest) return;
-      locationPending = false;
-      updateLocationControls();
-      showToast("Location access denied or unavailable.");
+    (error) => {
+      if (error.code === 1) fail('Location permission denied. Allow location access for PickleLook and try again.');
     },
-    { enableHighAccuracy: true, timeout: 8000 }
+    { enableHighAccuracy: true, maximumAge: 0 }
   );
 }
 nearMeBtn.onclick = locateUser;
