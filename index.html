@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.47">
+<meta name="application-version" content="0.2.2.48">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -831,22 +831,19 @@ body {
   .mobile-courts-btn { padding-inline:1px; font-size:.68rem; }
   #mobileListIcon { font-size:.53rem; }
   .map-floating-controls .restroom-toggle {
-    display:grid; grid-template-columns:30px max-content;
+    display:grid; grid-template-columns:25px max-content;
     place-content:center; place-items:center; align-self:flex-end;
-    gap:5px; padding:5px 6px;
+    gap:4px; padding:4px 6px;
     border:1px solid var(--restrooms-border);
     background:var(--surface-subtle);
     white-space:nowrap; font-size:.69rem; line-height:1.05;
   }
-  .map-floating-controls .restroom-toggle .restroom-symbol { width:30px; height:30px; }
-  .map-floating-controls .restroom-toggle .restroom-symbol use {
-    transform-origin:center;
-    transform:scale(1.09);
-  }
+  .map-floating-controls .restroom-toggle .restroom-symbol { width:25px; height:25px; }
   .map-floating-controls .restroom-toggle[aria-pressed="true"] { background:#345ba5; }
-  .restroom-mobile-lines { display:grid; justify-items:center; text-align:center; }
-  .restroom-mobile-lines > span:first-child { font-size:1.27em; letter-spacing:.015em; line-height:1; }
-  .restroom-mobile-lines > span:last-child { font-size:.9em; }
+  .restroom-mobile-lines {
+    display:grid; place-items:center; text-align:center;
+    gap:1px; line-height:1; font-size:1em; font-weight:700;
+  }
   .restroom-desktop-label { display:none; }
   .clear-court-filters { overflow-wrap:anywhere; line-height:1.1; }
   .search-bar-row.mobile-search-open .search-input-wrap {
@@ -997,7 +994,7 @@ body {
   <div id="mapView"></div>
 
   <div class="map-floating-controls">
-    <button class="restroom-toggle" id="restroomToggle" type="button" aria-label="RestRooms" title="RestRooms" aria-pressed="false">
+    <button class="restroom-toggle" id="restroomToggle" type="button" aria-label="Restrooms" title="Restrooms" aria-pressed="false">
       <svg class="restroom-symbol" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <defs>
           <g id="restroomSymbol">
@@ -1073,6 +1070,7 @@ let userLocationMarker = null;
 let userCoords = null;
 let locationRequest = 0;
 let locationPending = false;
+let locationTimer;
 const nearMeApproximateAboveMeters = 150;
 const markerById = new Map();
 
@@ -1810,6 +1808,7 @@ function updateLocationControls() {
 function stopLocationRequest() {
   ++locationRequest;
   locationPending = false;
+  clearTimeout(locationTimer);
   updateLocationControls();
 }
 
@@ -1851,41 +1850,56 @@ function locateUser() {
   locationPending = true;
   updateLocationControls();
   showToast("Locating your position...");
-  navigator.geolocation.getCurrentPosition(
-    ({ coords }) => {
-      if (request !== locationRequest) return;
-      const { latitude: lat, longitude: lng, accuracy } = coords;
-      const hasAccuracy = Number.isFinite(accuracy) && accuracy > 0;
-      const approximate = !hasAccuracy || accuracy > nearMeApproximateAboveMeters;
-      userCoords = { lat, lng, approximate };
-      stopLocationRequest();
-      trackPickleLook("near_me_success");
-      renderLocationResults();
-      const center = [lat, lng];
-      const markerStyle = { color: '#026b72', fillColor: '#026b72', weight: 2, fillOpacity: 0.14 };
-      if (approximate && hasAccuracy) {
-        userLocationMarker = L.circle(center, { ...markerStyle, radius: accuracy });
-        map.fitBounds(userLocationMarker.getBounds(), { maxZoom: 14, padding: [20, 20] });
-      } else {
-        userLocationMarker = L.circleMarker(center, {
-          ...markerStyle, radius: 8, color: '#ffffff', weight: 3, fillOpacity: 0.95
-        });
-        map.flyTo(center, approximate ? 12 : 14, { duration: 0.9 });
-      }
-      const title = approximate ? 'Approximate location' : 'Your location';
-      const detail = hasAccuracy ? `<br>Reported accuracy: ±${Math.round(accuracy)} m` : '';
-      userLocationMarker.addTo(map).bindPopup(`<b>📍 ${title}</b>${detail}`);
-      showToast(approximate ? 'Showing an approximate location' : 'Found your location');
-    },
-    (error) => {
-      if (request !== locationRequest) return;
-      stopLocationRequest();
-      showToast(error.code === 1
-        ? 'Location permission denied. Allow location access for PickleLook and try again.'
-        : 'Could not get your location. Check that Location is on and try again.');
-    },
-    { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }
-  );
+  const current = () => request === locationRequest;
+  const fail = (error) => {
+    if (!current()) return;
+    stopLocationRequest();
+    showToast(error?.code === 1
+      ? 'Location permission denied. Allow location access for PickleLook and try again.'
+      : 'Could not get your location. Check that Location is on and try Near Me again.');
+  };
+  const accept = ({ coords }) => {
+    if (!current()) return;
+    const { latitude: lat, longitude: lng, accuracy } = coords;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      fail();
+      return;
+    }
+    const hasAccuracy = Number.isFinite(accuracy) && accuracy > 0;
+    const approximate = !hasAccuracy || accuracy > nearMeApproximateAboveMeters;
+    userCoords = { lat, lng, approximate };
+    stopLocationRequest();
+    trackPickleLook("near_me_success");
+    renderLocationResults();
+    const center = [lat, lng];
+    const markerStyle = { color: '#026b72', fillColor: '#026b72', weight: 2, fillOpacity: 0.14 };
+    if (approximate && hasAccuracy) {
+      userLocationMarker = L.circle(center, { ...markerStyle, radius: accuracy });
+      map.fitBounds(userLocationMarker.getBounds(), { maxZoom: 14, padding: [20, 20] });
+    } else {
+      userLocationMarker = L.circleMarker(center, {
+        ...markerStyle, radius: 8, color: '#ffffff', weight: 3, fillOpacity: 0.95
+      });
+      map.flyTo(center, approximate ? 12 : 14, { duration: 0.9 });
+    }
+    const title = approximate ? 'Approximate location' : 'Your location';
+    const detail = hasAccuracy ? `<br>Reported accuracy: ±${Math.round(accuracy)} m` : '';
+    userLocationMarker.addTo(map).bindPopup(`<b>📍 ${title}</b>${detail}`);
+    showToast(approximate ? 'Showing an approximate location' : 'Found your location');
+  };
+
+  // Bound the wait even if the browser delays or omits its location callback.
+  locationTimer = setTimeout(fail, 15000);
+  navigator.geolocation.getCurrentPosition(accept, error => {
+    if (!current()) return;
+    if (error.code === 1) {
+      fail(error);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(accept, fail, {
+      enableHighAccuracy: true, maximumAge: 0, timeout: 8000
+    });
+  }, { enableHighAccuracy: false, maximumAge: 30000, timeout: 4000 });
 }
 nearMeBtn.onclick = locateUser;
 floatingGpsBtn.onclick = locateUser;
