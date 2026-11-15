@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.50">
+<meta name="application-version" content="0.2.2.51">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -1287,6 +1287,16 @@ function renderSites() {
 // Distances are straight-line estimates, not walking routes. Operational status is not real-time.
 const RESTROOM_DATA_URL = 'https://data.cityofnewyork.us/resource/i7jb-7jku.json?%24limit=2000&%24select=facility_name%2Clocation_type%2Coperator%2Cstatus%2Clatitude%2Clongitude%2Copen%2Chours_of_operation%2Caccessibility%2Cadditional_notes%2C%60%3A%40computed_region_yeji_bk3q%60&%24where=status+%3D+%27Operational%27';
 const RESTROOM_SOURCE_URL = 'https://data.cityofnewyork.us/d/i7jb-7jku';
+const whitehallRestroom = {
+  facility_name: 'Whitehall Terminal (South Ferry)',
+  location_type: 'Ferry Terminal',
+  operator: 'NYC DOT',
+  borough: 'Manhattan',
+  latitude: 40.702185,
+  longitude: -74.013336,
+  additional_notes: 'Free public restrooms inside the main concourse at 4 South Street. Use the Peter Minuit Plaza entrance. The Staten Island Ferry is also free.',
+  sourceUrl: 'https://www.nyc.gov/assets/dsny/downloads/pdf/studies-and-reports/2007-public-space-recycling-pilot.pdf'
+};
 let restroomDataPromise = null;
 let selectedRestroomRequest = 0;
 function loadRestroomData() {
@@ -1298,6 +1308,7 @@ function loadRestroomData() {
         Number.isFinite(Number(row.latitude)) && Number.isFinite(Number(row.longitude)) &&
         row.latitude != null && row.longitude != null
       ))
+      .then(rows => [...rows, whitehallRestroom])
       .catch(error => { restroomDataPromise = null; throw error; });
   }
   return restroomDataPromise;
@@ -1330,8 +1341,14 @@ function renderNearbyRestrooms(site, target, requestId) {
       const item = document.createElement('div'); item.className = 'restroom-item';
       const name = document.createElement('strong'); name.textContent = row.facility_name || 'Public restroom';
       const meta = document.createElement('p');
-      meta.textContent = `${Math.round(distance / 10) * 10} m away (straight line) · Listed operational`;
+      const listing = row === whitehallRestroom ? 'Public restroom · Hours unconfirmed' : 'Listed operational';
+      meta.textContent = `${Math.round(distance / 10) * 10} m away (straight line) · ${listing}`;
       item.append(name, meta);
+      if (row === whitehallRestroom) {
+        const accessNote = document.createElement('p');
+        accessNote.textContent = row.additional_notes;
+        item.append(accessNote);
+      }
       if (row.hours_of_operation) {
         const hours = document.createElement('p'); hours.textContent = 'Hours listed: ' + row.hours_of_operation;
         item.append(hours);
@@ -1986,6 +2003,7 @@ let restroomMatches = [];
 let restroomMarkers = new Map();
 
 function isFreeRestroomCandidate(row) {
+  if (row === whitehallRestroom) return true;
   const access = [row.facility_name, row.additional_notes].join(' ');
   const restricted = /\b(fee|pay|paid|purchase|admission|ticket|members? only|memberships?|recreation cent(?:er|re)|golf|ice rink|tennis cent(?:er|re)|indoor tennis|pool)\b/i;
   if (restricted.test(access) || row.open === 'Future') return false;
@@ -2012,6 +2030,16 @@ function restroomPopup(row) {
   directions.target = '_blank';
   directions.rel = 'noopener noreferrer';
   popup.append(directions);
+  if (row.sourceUrl) {
+    const source = document.createElement('a');
+    source.href = row.sourceUrl;
+    source.target = '_blank';
+    source.rel = 'noopener noreferrer';
+    source.textContent = 'Restroom source';
+    const line = document.createElement('div');
+    line.append(source);
+    popup.append(line);
+  }
   return popup;
 }
 
@@ -2062,7 +2090,7 @@ function renderRestroomResults(focusMatch = false) {
     const source = document.createElement('a');
     source.className = 'restroom-data-source';
     source.href = RESTROOM_SOURCE_URL;
-    source.textContent = 'NYC Open Data · availability may change';
+    source.textContent = 'NYC Open Data and local listings · availability may change';
     source.target = '_blank';
     source.rel = 'noopener noreferrer';
     list.append(source);
@@ -2133,9 +2161,10 @@ async function setRestroomMode(active) {
     const rows = await loadRestroomData();
     if (request !== restroomRequest) return;
     publicRestrooms = rows.filter(isFreeRestroomCandidate).map(row => {
-      const borough = restroomBoroughs[Number(row[':@computed_region_yeji_bk3q'])] || '';
+      const borough = row.borough || restroomBoroughs[Number(row[':@computed_region_yeji_bk3q'])] || '';
       return { ...row, borough, lat:Number(row.latitude), lng:Number(row.longitude),
-        searchText:`${row.facility_name} ${borough} ${row.location_type} ${row.operator}`.toLowerCase() };
+        searchText:[row.facility_name, borough, row.location_type, row.operator,
+          row === whitehallRestroom ? 'Staten Island Ferry 4 South Street' : ''].join(' ').toLowerCase() };
     });
     restroomStatus = '';
     renderRestroomResults(true);
