@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.39">
+<meta name="application-version" content="0.2.2.47">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -570,6 +570,22 @@ body {
 }
 [hidden] { display:none !important; }
 .selected-court-details { padding:16px 20px calc(20px + var(--safe-bottom)); gap:10px; }
+
+.court-report { margin: 10px 0; padding: 8px 0; border-block: 1px solid var(--border); }
+.court-report-status { white-space: pre-line; }
+.court-report-quick { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0; }
+.court-report-quick .action-btn { min-height: 44px; white-space: normal; }
+.court-report-notice:empty { display: none; }
+.court-report summary { cursor: pointer; font-weight: 700; padding: 8px 0; color: var(--primary); }
+.court-report form, .court-report form > div:not([hidden]), .court-report label { display: grid; gap: 6px; }
+.court-report form { margin-top: 4px; }
+.court-report select, .court-report textarea {
+  width: 100%; min-width: 0; padding: 7px; border: 1px solid var(--border);
+  border-radius: 6px; background: var(--surface); color: var(--text); font: inherit;
+}
+.court-report textarea { resize: vertical; }
+.court-report button { justify-self: start; }
+
 .selected-court-details h3 { font-size:1.15rem; margin:5px 0; }
 .selected-court-details p { margin:2px 0; line-height:1.5; }
 .detail-back { align-self:flex-start; background:transparent; color:var(--primary); border:0; font:inherit; font-weight:700; padding:8px 0; cursor:pointer; }
@@ -693,6 +709,7 @@ body {
 .app-tagline { white-space:normal; overflow:visible; }
 .app-tagline { line-height:1.2; }
 #aboutOpen { min-width:44px; min-height:44px; padding:0 7px; }
+.about-button-icon { display:none; }
 .about-dialog {
   width:min(calc(100% - 28px), 32rem); max-height:calc(100dvh - 32px);
   margin:auto; padding:clamp(14px, 4vw, 24px); overflow:auto;
@@ -727,14 +744,6 @@ body {
   #aboutOpen { padding-inline:5px; }
   #themeToggleBtn, .mobile-search-toggle { padding-inline:0; }
   .map-floating-controls { top:6px; right:6px; gap:0; }
-  .map-floating-controls .restroom-toggle {
-    align-self:flex-end; padding:2px 4px;
-    gap:2px; white-space:nowrap; line-height:1; font-size:.69rem;
-  }
-  .map-floating-controls .restroom-toggle .restroom-symbol { width:16px; height:16px; }
-  .map-floating-controls .restroom-label {
-    display:grid; justify-items:center; text-align:center;
-  }
   .map-floating-controls .restroom-toggle,
   .map-floating-controls .fab-btn {
     min-width:44px; min-height:44px; border:0;
@@ -765,16 +774,11 @@ body {
   clip-path:inset(50%); white-space:nowrap;
 }
 @media (max-width:859px) {
-  .app-header {
-    --header-side:clamp(52px, 2.4rem, 64px);
-    display:grid; grid-template-columns:var(--header-side) minmax(0, 1fr) var(--header-side);
-    gap:0 2px; padding:1px 6px; text-align:center;
-  }
-  .app-header .header-tools { display:contents; }
+  .app-header { justify-content:center; padding:1px 6px; text-align:center; }
   .app-header .app-brand {
-    grid-area:1 / 2; justify-self:center; width:100%; max-width:220px;
-    align-items:center; gap:0;
+    width:100%; max-width:220px; align-items:center; gap:0;
   }
+  .search-bar-row .header-tools { display:contents; }
   .app-brand .app-titles { width:100%; text-align:center; }
   .clear-court-filters {
     display:inline-flex; min-width:44px; min-height:44px;
@@ -785,14 +789,13 @@ body {
   }
   .app-tagline { font-size:.6rem; line-height:1.1; }
   .app-tagline-subject { text-wrap:pretty; }
+  .controls-panel { padding-inline:3px; }
   .search-bar-row {
-    display:grid; grid-template-columns:44px minmax(44px, auto) 44px max-content 44px;
-    justify-content:start;
-    grid-template-rows:auto; gap:2px;
+    display:grid; grid-template-columns:repeat(7, minmax(44px, 1fr)); gap:1px;
   }
   #mobileSearchToggle { grid-area:1 / 1; }
   #nearMeBtn {
-    grid-area:1 / 2; justify-content:center; padding-inline:5px;
+    grid-area:1 / 2; justify-content:center; padding-inline:2px;
     white-space:normal; text-align:center;
   }
   #mobileFilterBtn { grid-area:1 / 3; }
@@ -802,10 +805,12 @@ body {
     padding-inline:0; gap:2px; color:var(--primary); font-variant-numeric:tabular-nums;
   }
   .mobile-courts-btn[aria-expanded="true"] { border-color:var(--primary); }
-  #aboutOpen { grid-area:1 / 1; }
-  #themeToggleBtn { grid-area:1 / 3; }
-  :is(.app-header, .search-bar-row) > button,
-  .app-header .header-tools > button,
+  .search-bar-row #aboutOpen { grid-area:1 / 6; padding-inline:0; }
+  .search-bar-row #themeToggleBtn { grid-area:1 / 7; }
+  .search-bar-row #aboutOpen .about-button-label { display:none; }
+  .search-bar-row #aboutOpen .about-button-icon { display:block; }
+  .search-bar-row > button,
+  .search-bar-row .header-tools > button,
   .map-floating-controls .restroom-toggle {
     --control-fill:var(--surface-subtle);
     --control-border:var(--border);
@@ -813,26 +818,35 @@ body {
     border:0; background:transparent; box-shadow:none; border-radius:8px;
     line-height:1.1;
   }
-  :is(.app-header, .search-bar-row) > button::before,
-  .app-header .header-tools > button::before,
-  .map-floating-controls .restroom-toggle::before {
-    content:""; position:absolute; inset:5px 2px; z-index:-1; pointer-events:none;
+  .search-bar-row > button::before,
+  .search-bar-row .header-tools > button::before {
+    content:""; position:absolute; inset:4px 0; z-index:-1; pointer-events:none;
     border:1px solid var(--control-border); border-radius:8px;
     background:var(--control-fill);
   }
-  .app-header .header-tools > button { width:100%; padding-inline:2px; }
-  .app-header .header-tools > button::before { inset-inline:0; }
-  #aboutOpen { font-size:.75rem; white-space:normal; overflow-wrap:anywhere; }
   #nearMeBtn { max-width:100%; min-width:44px; --control-fill:var(--primary-bg); --control-border:var(--primary); }
   #nearMeBtn[aria-pressed="true"] { --control-fill:var(--primary); background:transparent; }
   .search-bar-row > button[aria-expanded="true"] { --control-border:var(--primary); background:transparent; }
-  .mobile-courts-btn { padding-inline:7px; }
-  .map-floating-controls .restroom-toggle { padding:2px 5px; --control-border:var(--restrooms-border); }
-  .map-floating-controls .restroom-toggle[aria-pressed="true"] {
-    --control-fill:#345ba5; background:transparent;
+  .search-bar-row .mobile-search-toggle { width:100%; }
+  .mobile-courts-btn { padding-inline:1px; font-size:.68rem; }
+  #mobileListIcon { font-size:.53rem; }
+  .map-floating-controls .restroom-toggle {
+    display:grid; grid-template-columns:30px max-content;
+    place-content:center; place-items:center; align-self:flex-end;
+    gap:5px; padding:5px 6px;
+    border:1px solid var(--restrooms-border);
+    background:var(--surface-subtle);
+    white-space:nowrap; font-size:.69rem; line-height:1.05;
   }
-  .map-floating-controls .restroom-label > span { font:inherit; }
-  .restroom-mobile-lines { display:grid; justify-items:center; gap:0; }
+  .map-floating-controls .restroom-toggle .restroom-symbol { width:30px; height:30px; }
+  .map-floating-controls .restroom-toggle .restroom-symbol use {
+    transform-origin:center;
+    transform:scale(1.09);
+  }
+  .map-floating-controls .restroom-toggle[aria-pressed="true"] { background:#345ba5; }
+  .restroom-mobile-lines { display:grid; justify-items:center; text-align:center; }
+  .restroom-mobile-lines > span:first-child { font-size:1.27em; letter-spacing:.015em; line-height:1; }
+  .restroom-mobile-lines > span:last-child { font-size:.9em; }
   .restroom-desktop-label { display:none; }
   .clear-court-filters { overflow-wrap:anywhere; line-height:1.1; }
   .search-bar-row.mobile-search-open .search-input-wrap {
@@ -863,9 +877,12 @@ body {
   .mobile-sheet-close { flex:none; }
   .sheet-scroll-content { min-height:0; }
 }
-@media (max-width:335px) {
-  .controls-panel { padding-inline:3px; }
-  .search-bar-row { column-gap:0; }
+@media (max-width:319px) {
+  .search-bar-row { grid-template-columns:repeat(4, minmax(44px, 1fr)); }
+  .search-bar-row #clearActiveFiltersBtn { grid-area:2 / 1; }
+  .search-bar-row #aboutOpen { grid-area:2 / 3; }
+  .search-bar-row #themeToggleBtn { grid-area:2 / 4; }
+  .search-bar-row.mobile-search-open .search-input-wrap { grid-row:3; }
 }
 </style>
 <!-- PickleLook GA4: pageviews and privacy-conscious, non-identifying map interactions. -->
@@ -890,7 +907,12 @@ body {
     </div>
   </div>
   <div class="header-tools">
-    <button class="action-btn" id="aboutOpen" type="button" aria-haspopup="dialog" aria-controls="aboutDialog">About</button>
+    <button class="action-btn" id="aboutOpen" type="button" aria-haspopup="dialog" aria-controls="aboutDialog" aria-label="About PickleLook" title="About PickleLook">
+      <span class="about-button-label">About</span>
+      <svg class="about-button-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="9"></circle><path d="M12 11v5m0-8h.01"></path>
+      </svg>
+    </button>
     <button class="action-btn" id="themeToggleBtn" aria-label="Toggle Dark Mode">◐</button>
   </div>
 </header>
@@ -950,6 +972,26 @@ body {
     </div>
   </div>
 </div>
+
+<script>
+  (() => {
+    const header = document.querySelector('.app-header');
+    const tools = header.querySelector('.header-tools');
+    const toolbar = document.querySelector('.search-bar-row');
+    const mobile = window.matchMedia('(max-width:859px)');
+
+    function placeHeaderTools() {
+      const destination = mobile.matches ? toolbar : header;
+      if (tools.parentElement === destination) return;
+      const focused = document.activeElement;
+      destination.append(tools);
+      if (tools.contains(focused)) focused.focus({ preventScroll:true });
+    }
+
+    placeHeaderTools();
+    mobile.addEventListener('change', placeHeaderTools);
+  })();
+</script>
 
 <div class="viewport-stage">
   <div id="mapView"></div>
@@ -1031,10 +1073,7 @@ let userLocationMarker = null;
 let userCoords = null;
 let locationRequest = 0;
 let locationPending = false;
-let locationWatchId = null;
-let locationTimer = null;
-const nearMeMaxAccuracyMeters = 150;
-const nearMeWaitMs = 12000;
+const nearMeApproximateAboveMeters = 150;
 const markerById = new Map();
 
 // Court counts and key feedback must work even if the mapping library fails.
@@ -1154,7 +1193,7 @@ function renderSites() {
 
   const resultsCount = `${visible.length} location${visible.length === 1 ? '' : 's'}`;
   document.getElementById('sheetResultsCount').textContent =
-    origin ? `${resultsCount} · Nearest first` : `${resultsCount} available`;
+    origin ? `${resultsCount} · ${origin.approximate ? 'Nearest to estimated location' : 'Nearest first'}` : `${resultsCount} available`;
 
   visible.forEach(site => {
     const conf = typeConfig[site.cat] || { label: "Court", color: "#026b72" };
@@ -1182,7 +1221,7 @@ function renderSites() {
     markerById.set(site.id, marker);
 
     const meters = origin ? straightLineMeters(origin.lat, origin.lng, site.lat, site.lng) : null;
-    const distanceLabel = meters === null ? '' : ` · ${(meters / 1000).toFixed(2)} km straight line`;
+    const distanceLabel = meters === null ? '' : ` · ${(meters / 1000).toFixed(2)} km straight line${origin.approximate ? ' (approx.)' : ''}`;
     const card = document.createElement('div');
     card.className = 'site-card';
     card.innerHTML = `
@@ -1283,6 +1322,194 @@ function renderNearbyRestrooms(site, target, requestId) {
   });
 }
 
+// Set this to the deployed Worker URL ending in /reports to enable shared reports.
+const courtReportEndpoint = '';
+const courtReportPreview = !courtReportEndpoint &&
+  new URLSearchParams(location.search).get('reportPreview') === '1';
+const reportsEnabled = Boolean(courtReportEndpoint || courtReportPreview);
+const reportPilotCourtId = 'MAN-REC-02';
+const courtConditionOptions = ['Court space available', 'Full or waiting', 'Wet or slippery', 'Net missing or damaged', 'Court appears closed'];
+const courtIssueOptions = ['Court no longer exists', 'Wrong location', 'Access or hours', 'Court setup or count', 'Restroom information', 'Other'];
+const recentCourtReportWindow = 60 * 60 * 1000;
+
+function createReportField(labelText, control) {
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  label.append(control);
+  return label;
+}
+
+function courtReportSelect(choices, placeholder) {
+  const select = document.createElement('select');
+  select.append(new Option(placeholder, ''));
+  choices.forEach(choice => select.append(new Option(choice, choice)));
+  return select;
+}
+
+function courtReporterId() {
+  let id = localStorage.getItem('picklelook-report-id');
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem('picklelook-report-id', id);
+  }
+  return id;
+}
+
+async function courtReportRequest(court, report) {
+  if (courtReportPreview) {
+    const key = 'picklelook-preview-crowd:' + court;
+    if (report?.kind === 'check-in') {
+      localStorage.setItem(key, JSON.stringify({ crowd: report.crowd, reportedAt: Date.now() }));
+    }
+    if (report) return { saved: true };
+    const recent = JSON.parse(localStorage.getItem(key) || 'null');
+    return { recent: recent && Date.now() - recent.reportedAt < recentCourtReportWindow ? recent : null };
+  }
+  const url = new URL(courtReportEndpoint);
+  if (!report) url.searchParams.set('court', court);
+  const response = await fetch(url, {
+    ...(report && { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(report) }),
+    signal: AbortSignal.timeout(10000)
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Court reports are temporarily unavailable.');
+  if (report && result.saved !== true) throw new Error('The report could not be confirmed. Try again.');
+  return result;
+}
+
+function addCourtReport(target, site) {
+  const section = document.createElement('section');
+  section.className = 'court-report';
+  const status = document.createElement('p');
+  status.className = 'court-report-status';
+  status.setAttribute('role', 'status');
+  const quickActions = document.createElement('div');
+  quickActions.className = 'court-report-quick';
+  quickActions.setAttribute('role', 'group');
+  quickActions.setAttribute('aria-label', 'Report court availability now');
+  section.append(status, quickActions);
+  const disclosure = document.createElement('details');
+  const summary = document.createElement('summary');
+  summary.textContent = 'Report another issue';
+  disclosure.append(summary);
+
+  const form = document.createElement('form');
+  const notice = document.createElement('p');
+  notice.setAttribute('role', 'status');
+  notice.className = 'court-report-notice';
+  const submit = document.createElement('button');
+  submit.type = 'submit';
+  submit.className = 'action-btn';
+  submit.textContent = 'Send report';
+
+  const kind = courtReportSelect(['Court conditions now', 'Correct this listing'], 'Choose report type');
+  kind.value = 'Court conditions now';
+  const condition = courtReportSelect(courtConditionOptions, 'Choose what you see');
+  const issue = courtReportSelect(courtIssueOptions, 'Choose an issue');
+  const note = document.createElement('textarea');
+  note.rows = 3;
+  note.minLength = 4;
+  note.maxLength = 400;
+  note.placeholder = 'Describe the correction. Leave out personal details.';
+  const checkInFields = document.createElement('div');
+  const correctionFields = document.createElement('div');
+  checkInFields.append(createReportField('What’s happening at the court?', condition));
+  correctionFields.append(createReportField('What needs updating?', issue));
+  correctionFields.append(createReportField('What changed?', note));
+  function updateFields() {
+    const checkIn = kind.value === 'Court conditions now';
+    checkInFields.hidden = !checkIn;
+    correctionFields.hidden = Boolean(checkIn);
+    condition.disabled = !checkIn;
+    issue.disabled = checkIn;
+    note.disabled = Boolean(checkIn);
+    condition.required = Boolean(checkIn);
+    issue.required = !checkIn;
+    note.required = !checkIn;
+  }
+  kind.required = true;
+  form.append(createReportField('Report type', kind));
+  kind.addEventListener('change', updateFields);
+  updateFields();
+  form.append(checkInFields, correctionFields, submit);
+  disclosure.append(form);
+  section.append(disclosure, notice);
+  target.append(section);
+
+  let expiryTimer;
+  async function refreshStatus() {
+    clearTimeout(expiryTimer);
+    try {
+      const data = await courtReportRequest(site.id);
+      if (!section.isConnected) return;
+      const recent = data.recent;
+      const updateAge = recent ? Date.now() - recent.reportedAt : Infinity;
+      const current = recent && updateAge < recentCourtReportWindow;
+      const message = current
+        ? 'Player report: ' + recent.crowd + ' · ' + new Date(recent.reportedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        : 'No recent player report.';
+      status.textContent = (courtReportPreview ? 'Preview · this browser only. ' : '') + message;
+      if (current) expiryTimer = setTimeout(refreshStatus, recentCourtReportWindow - Math.max(0, updateAge) + 1000);
+    } catch {
+      if (section.isConnected) status.textContent = 'Player reports are temporarily unavailable.';
+    }
+  }
+
+  const court = site.id;
+  const submitControls = [submit];
+  let pending;
+  let sending = false;
+  async function sendReport(fields, onSaved) {
+    if (sending) return;
+    sending = true;
+    submitControls.forEach(button => { button.disabled = true; });
+    notice.textContent = 'Sending report…';
+    try {
+      const fingerprint = JSON.stringify(fields);
+      if (pending?.fingerprint !== fingerprint) {
+        pending = { fingerprint, report: { ...fields, court, reporter: courtReporterId(), id: crypto.randomUUID() } };
+      }
+      await courtReportRequest(court, pending.report);
+      pending = undefined;
+      const checkIn = fields.kind === 'check-in';
+      notice.textContent = courtReportPreview ? 'Preview only. Nothing was sent.'
+        : checkIn ? 'Report shared.' : 'Report sent for review.';
+      onSaved?.();
+      if (checkIn) await refreshStatus();
+    } catch (error) {
+      notice.textContent = error.message || 'Could not send the report. Try again.';
+    } finally {
+      sending = false;
+      submitControls.forEach(button => { button.disabled = false; });
+    }
+  }
+
+  const options = [['Space available', 'Court space available'], ['Full or waiting', 'Full or waiting']];
+  for (const [label, crowd] of options) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'action-btn';
+    button.textContent = label;
+    button.setAttribute('aria-label', 'Report: ' + label);
+    button.addEventListener('click', () => sendReport({ kind: 'check-in', crowd }));
+    submitControls.push(button);
+    quickActions.append(button);
+  }
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const fields = condition.disabled
+      ? { kind: 'correction', issue: issue.value, note: note.value.trim() }
+      : { kind: 'check-in', crowd: condition.value };
+    sendReport(fields, () => {
+      form.reset();
+      kind.value = 'Court conditions now';
+      updateFields();
+    });
+  });
+  refreshStatus();
+}
+
 function selectCourt(site, marker, card) {
   trackPickleLook("court_detail_view", { court_id: site.id, borough: site.borough, court_type: site.cat });
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('is-active'));
@@ -1311,7 +1538,9 @@ function selectCourt(site, marker, card) {
     schedule.rel = 'noopener noreferrer';
     hours.append(schedule);
   }
-  details.append(courts, directions);
+  details.append(courts);
+  if (reportsEnabled && site.id === reportPilotCourtId) addCourtReport(details, site);
+  details.append(directions);
   const restroomSection = document.createElement('section');
   restroomSection.className = 'restroom-section';
   details.append(restroomSection);
@@ -1581,12 +1810,6 @@ function updateLocationControls() {
 function stopLocationRequest() {
   ++locationRequest;
   locationPending = false;
-  clearTimeout(locationTimer);
-  locationTimer = null;
-  if (locationWatchId !== null) {
-    navigator.geolocation.clearWatch(locationWatchId);
-    locationWatchId = null;
-  }
   updateLocationControls();
 }
 
@@ -1628,47 +1851,40 @@ function locateUser() {
   locationPending = true;
   updateLocationControls();
   showToast("Locating your position...");
-  let receivedApproximateFix = false;
-  const fail = (message) => {
-    if (request !== locationRequest) return;
-    stopLocationRequest();
-    showToast(message);
-  };
-
-  locationTimer = setTimeout(() => {
-    fail(receivedApproximateFix
-      ? 'Location is too approximate. Allow Precise location for your browser and try again.'
-      : 'Could not get your location. Check that Location is on and try again.');
-  }, nearMeWaitMs);
-
-  locationWatchId = navigator.geolocation.watchPosition(
+  navigator.geolocation.getCurrentPosition(
     ({ coords }) => {
       if (request !== locationRequest) return;
       const { latitude: lat, longitude: lng, accuracy } = coords;
-      if (!Number.isFinite(accuracy) || accuracy <= 0 || accuracy > nearMeMaxAccuracyMeters) {
-        if (!receivedApproximateFix) showToast('Waiting for a more accurate location…');
-        receivedApproximateFix = true;
-        return;
-      }
-      userCoords = { lat, lng };
+      const hasAccuracy = Number.isFinite(accuracy) && accuracy > 0;
+      const approximate = !hasAccuracy || accuracy > nearMeApproximateAboveMeters;
+      userCoords = { lat, lng, approximate };
       stopLocationRequest();
       trackPickleLook("near_me_success");
       renderLocationResults();
-      map.flyTo([lat, lng], 14, { duration: 0.9 });
-      userLocationMarker = L.circleMarker([lat, lng], {
-        radius: 8,
-        fillColor: '#026b72',
-        color: '#ffffff',
-        weight: 3,
-        opacity: 1,
-        fillOpacity: 0.95
-      }).addTo(map).bindPopup(`<b>📍 Your location</b><br>Estimated accuracy: ±${Math.round(accuracy)} m`);
-      showToast('Found your location');
+      const center = [lat, lng];
+      const markerStyle = { color: '#026b72', fillColor: '#026b72', weight: 2, fillOpacity: 0.14 };
+      if (approximate && hasAccuracy) {
+        userLocationMarker = L.circle(center, { ...markerStyle, radius: accuracy });
+        map.fitBounds(userLocationMarker.getBounds(), { maxZoom: 14, padding: [20, 20] });
+      } else {
+        userLocationMarker = L.circleMarker(center, {
+          ...markerStyle, radius: 8, color: '#ffffff', weight: 3, fillOpacity: 0.95
+        });
+        map.flyTo(center, approximate ? 12 : 14, { duration: 0.9 });
+      }
+      const title = approximate ? 'Approximate location' : 'Your location';
+      const detail = hasAccuracy ? `<br>Reported accuracy: ±${Math.round(accuracy)} m` : '';
+      userLocationMarker.addTo(map).bindPopup(`<b>📍 ${title}</b>${detail}`);
+      showToast(approximate ? 'Showing an approximate location' : 'Found your location');
     },
     (error) => {
-      if (error.code === 1) fail('Location permission denied. Allow location access for PickleLook and try again.');
+      if (request !== locationRequest) return;
+      stopLocationRequest();
+      showToast(error.code === 1
+        ? 'Location permission denied. Allow location access for PickleLook and try again.'
+        : 'Could not get your location. Check that Location is on and try again.');
     },
-    { enableHighAccuracy: true, maximumAge: 0 }
+    { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 }
   );
 }
 nearMeBtn.onclick = locateUser;
@@ -1776,7 +1992,7 @@ function renderRestroomResults(focusMatch = false) {
   const message = document.createElement('p');
   message.className = 'closest-heading';
   message.textContent = restroomStatus || (nearby.length
-    ? (userCoords ? 'Closest to you · ' : 'Closest to the map center · ') + 'Check posted hours before going.'
+    ? (userCoords ? (userCoords.approximate ? 'Closest to your estimated location · ' : 'Closest to you · ') : 'Closest to the map center · ') + 'Check posted hours before going.'
     : 'No restrooms match. Try a park, library, or borough name.');
   list.append(message);
   if (!restroomStatus && nearby.length) {
@@ -1796,7 +2012,7 @@ function renderRestroomResults(focusMatch = false) {
     name.textContent = row.facility_name;
     const detail = document.createElement('span');
     detail.textContent = [row.borough, row.hours_of_operation || 'Hours not listed',
-      userCoords ? `${(meters / 1000).toFixed(2)} km straight line` : ''].filter(Boolean).join(' · ');
+      userCoords ? `${(meters / 1000).toFixed(2)} km straight line${userCoords.approximate ? ' (approx.)' : ''}` : ''].filter(Boolean).join(' · ');
     result.append(name, detail);
     result.onclick = () => {
       if (window.innerWidth < 860) setSheetState('state-collapsed');
