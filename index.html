@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.48">
+<meta name="application-version" content="0.2.2.50">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -522,11 +522,20 @@ body {
   pointer-events: none;
   transition: all 0.2s ease;
   box-shadow: var(--shadow-md);
-  white-space: nowrap;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  text-align: center;
 }
 .toast-notice.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.near-me-location-dot {
+  background: #1769d2;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #174c8d, 0 2px 6px rgba(0,0,0,.35);
 }
 
 .court-pin {
@@ -673,9 +682,30 @@ body {
 
 /* Inline marker legend and restroom result list */
 .filter-pin { display:inline-grid; width:24px; height:24px; border-width:1px; font-size:13px; flex:none; }
+#sheetCardsContainer > .closest-heading,
+#sheetCardsContainer > .restroom-data-source { flex-shrink: 0; }
 .closest-heading { font-size:.85rem; font-weight:700; padding:10px 12px; margin:0; }
-.closest-result { display:flex; flex-direction:column; align-items:flex-start; gap:5px; width:100%; padding:13px 14px; border:0; border-bottom:1px solid var(--border); background:var(--surface); color:var(--text); text-align:left; cursor:pointer; min-height:56px; font:inherit; }
-.closest-result span { font-size:.82rem; opacity:.8; }
+.closest-result {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-subtle);
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.closest-result span { font-size: .82rem; color: var(--text-muted); }
+.closest-result .restroom-result-hours { white-space: pre-line; }
 .closest-result:focus-visible { outline:3px solid var(--primary); outline-offset:-3px; }
 /* v0.2.1: compact filter status, persistent GPS access, and mobile touch targets */
 .mobile-gps-fab, .clear-court-filters { display:none; }
@@ -1028,7 +1058,7 @@ body {
   </div>
 </div>
 
-<div class="toast-notice" id="toastNotice">Copied to clipboard!</div>
+<div class="toast-notice" id="toastNotice" role="status"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -1119,11 +1149,16 @@ pickleLookBasemap.on('tileerror', () => {
 });
 pickleLookBasemap.addTo(map);
 
-function showToast(msg) {
+let toastTimer;
+function showToast(msg, duration = 2000) {
   const toast = document.getElementById('toastNotice');
+  clearTimeout(toastTimer);
   toast.textContent = msg;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+    toast.textContent = '';
+  }, duration);
 }
 
 function updateBadgeCounts() {
@@ -1847,16 +1882,17 @@ function locateUser() {
     return;
   }
   const request = ++locationRequest;
+  const mobile = window.matchMedia('(max-width: 859px)').matches;
   locationPending = true;
   updateLocationControls();
-  showToast("Locating your position...");
+  showToast("Locating your position…", 15000);
   const current = () => request === locationRequest;
   const fail = (error) => {
     if (!current()) return;
     stopLocationRequest();
     showToast(error?.code === 1
       ? 'Location permission denied. Allow location access for PickleLook and try again.'
-      : 'Could not get your location. Check that Location is on and try Near Me again.');
+      : 'Could not get your location. Check that Location is on and try Near Me again.', 5000);
   };
   const accept = ({ coords }) => {
     if (!current()) return;
@@ -1873,7 +1909,21 @@ function locateUser() {
     renderLocationResults();
     const center = [lat, lng];
     const markerStyle = { color: '#026b72', fillColor: '#026b72', weight: 2, fillOpacity: 0.14 };
-    if (approximate && hasAccuracy) {
+    const title = approximate ? 'Approximate location' : 'Your location';
+    const detail = hasAccuracy ? `<br>Reported accuracy: ±${Math.round(accuracy)} m` : '';
+    const popup = `<b>📍 ${title}</b>${detail}`;
+    if (mobile) {
+      const dot = L.marker(center, {
+        icon: L.divIcon({ className: 'near-me-location-dot', iconSize: [18, 18], iconAnchor: [9, 9] }),
+        title, alt: title, zIndexOffset: 10000
+      }).bindPopup(popup);
+      const markerLayers = [dot];
+      if (approximate && hasAccuracy) {
+        markerLayers.unshift(L.circle(center, { ...markerStyle, radius: accuracy }));
+      }
+      userLocationMarker = L.layerGroup(markerLayers).addTo(map);
+      map.flyTo(center, approximate ? 13 : 14, { duration: 0.9 });
+    } else if (approximate && hasAccuracy) {
       userLocationMarker = L.circle(center, { ...markerStyle, radius: accuracy });
       map.fitBounds(userLocationMarker.getBounds(), { maxZoom: 14, padding: [20, 20] });
     } else {
@@ -1882,24 +1932,23 @@ function locateUser() {
       });
       map.flyTo(center, approximate ? 12 : 14, { duration: 0.9 });
     }
-    const title = approximate ? 'Approximate location' : 'Your location';
-    const detail = hasAccuracy ? `<br>Reported accuracy: ±${Math.round(accuracy)} m` : '';
-    userLocationMarker.addTo(map).bindPopup(`<b>📍 ${title}</b>${detail}`);
+    if (!mobile) userLocationMarker.addTo(map).bindPopup(popup);
     showToast(approximate ? 'Showing an approximate location' : 'Found your location');
   };
 
   // Bound the wait even if the browser delays or omits its location callback.
   locationTimer = setTimeout(fail, 15000);
+  const precise = { enableHighAccuracy: true, maximumAge: 0, timeout: 8000 };
+  const quick = { enableHighAccuracy: false, maximumAge: 30000, timeout: 4000 };
   navigator.geolocation.getCurrentPosition(accept, error => {
     if (!current()) return;
     if (error.code === 1) {
       fail(error);
       return;
     }
-    navigator.geolocation.getCurrentPosition(accept, fail, {
-      enableHighAccuracy: true, maximumAge: 0, timeout: 8000
-    });
-  }, { enableHighAccuracy: false, maximumAge: 30000, timeout: 4000 });
+    showToast(mobile ? 'Trying approximate location…' : 'Trying a fresh location fix…', 8000);
+    navigator.geolocation.getCurrentPosition(accept, fail, mobile ? quick : precise);
+  }, mobile ? precise : quick);
 }
 nearMeBtn.onclick = locateUser;
 floatingGpsBtn.onclick = locateUser;
@@ -2024,10 +2073,18 @@ function renderRestroomResults(focusMatch = false) {
     result.className = 'closest-result';
     const name = document.createElement('strong');
     name.textContent = row.facility_name;
-    const detail = document.createElement('span');
-    detail.textContent = [row.borough, row.hours_of_operation || 'Hours not listed',
+    result.append(name);
+    const locationText = [row.borough,
       userCoords ? `${(meters / 1000).toFixed(2)} km straight line${userCoords.approximate ? ' (approx.)' : ''}` : ''].filter(Boolean).join(' · ');
-    result.append(name, detail);
+    if (locationText) {
+      const location = document.createElement('span');
+      location.textContent = locationText;
+      result.append(location);
+    }
+    const hours = document.createElement('span');
+    hours.className = 'restroom-result-hours';
+    hours.textContent = (row.hours_of_operation || '').trim() || 'Hours not listed';
+    result.append(hours);
     result.onclick = () => {
       if (window.innerWidth < 860) setSheetState('state-collapsed');
       map.setView([row.lat, row.lng], 16);
