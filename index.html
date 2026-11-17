@@ -1319,7 +1319,8 @@ function renderSites() {
 
 function renderCourtListIfOpen() {
   const container = document.getElementById('sheetCardsContainer');
-  if (restroomMode || container.hidden || !pendingCourtList || sheet.classList.contains('state-collapsed')) return;
+  const mobileListClosed = !desktopCourtList.matches && sheet.classList.contains('state-collapsed');
+  if (restroomMode || container.hidden || !pendingCourtList || mobileListClosed) return;
   const { visible, origin } = pendingCourtList;
   pendingCourtList = null;
 
@@ -2269,6 +2270,7 @@ function selectCourt(site, marker, card) {
 }
 
 const sheet = document.getElementById('courtSheet');
+const desktopCourtList = window.matchMedia('(min-width: 860px)');
 const sheetHandle = document.getElementById('sheetHandle');
 const sheetToggleBtn = document.getElementById('sheetToggleBtn');
 sheet.addEventListener('transitionend', event => {
@@ -2855,8 +2857,8 @@ map.on('moveend', () => {
   if (restroomMode) renderRestroomResults();
 });
 
-// A mobile browser toolbar resize should not close the current sheet.
-window.matchMedia('(max-width:859px)').addEventListener('change', () => {
+// Recheck list visibility when switching layouts and keep the current mobile sheet state.
+desktopCourtList.addEventListener('change', () => {
   const state = sheet.classList.contains('state-expanded') ? 'state-expanded' :
     sheet.classList.contains('state-half') ? 'state-half' : 'state-collapsed';
   setSheetState(state);
