@@ -542,10 +542,10 @@ body {
   font-size: 12px;
   transition: transform 0.15s;
 }
-.train-layer-active .map-court-pin {
-  --court-pin-hole: rgba(185,255,157,0.27) 1px, transparent 1.45px;
+.train-layer-active :is(.map-court-pin, .filter-pin) {
+  --court-pin-hole: rgba(185,255,157,0.44) 1px, transparent 1.45px;
+  color-scheme: only light;
   border-color: #63ff31;
-  box-shadow: 0 0 0 1px #23291b, 0 2px 6px rgba(0,0,0,0.35);
   background-image:
     radial-gradient(circle at 50% 14%, var(--court-pin-hole)),
     radial-gradient(circle at 81% 32%, var(--court-pin-hole)),
@@ -554,6 +554,10 @@ body {
     radial-gradient(circle at 19% 68%, var(--court-pin-hole)),
     radial-gradient(circle at 19% 32%, var(--court-pin-hole));
 }
+.train-layer-active .map-court-pin {
+  box-shadow: 0 0 0 1px #23291b, 0 2px 6px rgba(0,0,0,0.35);
+}
+.train-layer-active .filter-pin { border-width: 2px; }
 .map-court-pin:hover { transform: scale(1.2); }
 
 @media (min-width: 860px) {
@@ -624,6 +628,7 @@ body {
   .sheet-scroll-content { overscroll-behavior:contain; }
   .selected-court-details { padding:10px 16px calc(18px + var(--safe-bottom)); }
   .map-court-pin { width:34px; height:34px; }
+  .train-layer-active .map-court-pin { border-width:3px; }
   .map-floating-controls { top:10px; right:10px; }
 }
 /* v0.2.1.4: compact mobile discovery controls; keep 44px touch targets. */
@@ -2100,7 +2105,7 @@ function setTravelLayer(mode, enabled) {
   travelButtons[mode].setAttribute('aria-pressed', String(enabled));
 
   if (mode === 'transit') {
-    map.getContainer().classList.toggle('train-layer-active', enabled);
+    document.documentElement.classList.toggle('train-layer-active', enabled);
     if (enabled) {
       if (!transitLinesLayer) buildTrainRoutes();
       transitLinesLayer.addTo(map);
