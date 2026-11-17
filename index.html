@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.54">
+<meta name="application-version" content="0.2.2.55">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -932,7 +932,7 @@ body {
   min-height: 42px; color: inherit; background: var(--surface); border: 0;
   border-radius: 8px; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer;
 }
-.train-route-control select { width: 7.5em; min-width: 0; padding-inline: 6px; text-overflow: ellipsis; }
+.train-route-control select { width: 9em; min-width: 0; padding-inline: 6px; text-overflow: ellipsis; }
 .train-route-control button { min-width: 44px; font-size: 1rem; }
 .transport-pin {
   display: grid; place-items: center; border-radius: 50%; background: var(--pin-color, #1459a1);
@@ -1672,7 +1672,8 @@ let travelSelection = null;
 let selectedTrainRoute = '';
 let transitLinesLayer;
 const trainPaths = new Map();
-const stopsByTrainRoute = new Map();
+const trainStations = [];
+const trainStationZoom = 13;
 let bikeRoutesLayer;
 let bikeRoutesPromise;
 let bikeRoutesLoadError = false;
@@ -1802,7 +1803,6 @@ function buildTrainRoutes() {
       ...options, color: subwayColors[route], weight: 4, opacity: .96, interactive: false
     });
     trainPaths.set(route, { casing, line });
-    stopsByTrainRoute.set(route, []);
     transitLinesLayer.addLayer(hitArea).addLayer(casing).addLayer(line);
     trainRouteSelect.add(new Option(routeName(route), route));
   }
@@ -1811,13 +1811,13 @@ function buildTrainRoutes() {
     const platforms = new Map();
     for (const [name, services, lat, lng] of group) {
       for (const route of stationRouteIds(name, services, lat)) {
-        if (stopsByTrainRoute.has(route) && !platforms.has(route)) {
-          platforms.set(route, { key: group, name, latlng: [lat, lng] });
+        if (trainPaths.has(route) && !platforms.has(route)) {
+          platforms.set(route, { name, latlng: [lat, lng] });
         }
       }
     }
-    const routes = [...platforms.keys()];
-    for (const [route, point] of platforms) stopsByTrainRoute.get(route).push({ ...point, routes });
+    const [name, , lat, lng] = group[0];
+    trainStations.push({ key: group, name, latlng: [lat, lng], platforms });
   }
 }
 
@@ -1877,11 +1877,22 @@ function syncVisibleMarkers(points, bounds, markers, layer, createMarker) {
 function refreshTravelMarkers() {
   const zoom = map.getZoom();
   const bounds = map.getBounds().pad(.15);
-  if (activeTravelLayers.has('transit') && selectedTrainRoute && zoom >= 13) {
-    const color = subwayColors[selectedTrainRoute];
-    syncVisibleMarkers(stopsByTrainRoute.get(selectedTrainRoute), bounds, stationMarkers, trainStationsLayer,
-      ({ name, latlng, routes }) => makeTransportPin(latlng, name, 'train', color)
-        .bindPopup(() => stationPopup(name, routes)));
+  if (activeTravelLayers.has('transit') && zoom >= trainStationZoom) {
+    const stations = selectedTrainRoute ? trainStations.map(station => {
+      const platform = station.platforms.get(selectedTrainRoute);
+      return platform ? { ...station, ...platform } : station;
+    }) : trainStations;
+    syncVisibleMarkers(stations, bounds, stationMarkers, trainStationsLayer,
+      ({ name, latlng, platforms }) => {
+        const marker = platforms.has(selectedTrainRoute)
+          ? makeTransportPin(latlng, name, 'train', subwayColors[selectedTrainRoute])
+          : L.circleMarker(latlng, {
+            pane: 'travelStations', renderer: travelStationRenderer, className: 'train-station-dot',
+            radius: platforms.size > 1 ? 5 : 4, weight: 1.5, color: '#25364a',
+            fillColor: '#fff', opacity: selectedTrainRoute ? .55 : 1, fillOpacity: selectedTrainRoute ? .6 : 1
+          });
+        return marker.bindPopup(() => stationPopup(name, [...platforms.keys()]));
+      });
     trainStationsLayer.addTo(map);
   } else {
     trainStationsLayer.remove();
@@ -1898,7 +1909,7 @@ function refreshTravelMarkers() {
 
 function renderTravelLegend() {
   const entries = [];
-  if (selectedTrainRoute && map.getZoom() < 13) entries.push(['Zoom in for train stations']);
+  if (activeTravelLayers.has('transit') && map.getZoom() < trainStationZoom) entries.push(['Zoom in for train stations']);
   if (activeTravelLayers.has('bike')) {
     if (bikeRoutesLoadError) entries.push(['Bike lanes unavailable. Toggle Bike to retry.']);
     else if (!bikeRoutesLayer) entries.push(['Loading bike lanes…']);
@@ -2011,7 +2022,11 @@ function setTravelLayer(mode, enabled) {
   refreshTravelMap();
 }
 
-travelButtons.transit.onclick = () => setTravelLayer('transit', !activeTravelLayers.has('transit'));
+travelButtons.transit.onclick = () => {
+  const enabled = !activeTravelLayers.has('transit');
+  if (enabled && map.getZoom() < trainStationZoom) map.setZoom(trainStationZoom, { animate: false });
+  setTravelLayer('transit', enabled);
+};
 travelButtons.bike.onclick = () => {
   const enabled = !activeTravelLayers.has('bike');
   if (enabled && map.getZoom() < 14) map.setZoom(14, { animate: false });
