@@ -542,6 +542,18 @@ body {
   font-size: 12px;
   transition: transform 0.15s;
 }
+.train-layer-active .map-court-pin {
+  --court-pin-hole: rgba(185,255,157,0.27) 1px, transparent 1.45px;
+  border-color: #63ff31;
+  box-shadow: 0 0 0 1px #23291b, 0 2px 6px rgba(0,0,0,0.35);
+  background-image:
+    radial-gradient(circle at 50% 14%, var(--court-pin-hole)),
+    radial-gradient(circle at 81% 32%, var(--court-pin-hole)),
+    radial-gradient(circle at 81% 68%, var(--court-pin-hole)),
+    radial-gradient(circle at 50% 86%, var(--court-pin-hole)),
+    radial-gradient(circle at 19% 68%, var(--court-pin-hole)),
+    radial-gradient(circle at 19% 32%, var(--court-pin-hole));
+}
 .map-court-pin:hover { transform: scale(1.2); }
 
 @media (min-width: 860px) {
@@ -2088,6 +2100,7 @@ function setTravelLayer(mode, enabled) {
   travelButtons[mode].setAttribute('aria-pressed', String(enabled));
 
   if (mode === 'transit') {
+    map.getContainer().classList.toggle('train-layer-active', enabled);
     if (enabled) {
       if (!transitLinesLayer) buildTrainRoutes();
       transitLinesLayer.addTo(map);
