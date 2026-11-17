@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.53">
+<meta name="application-version" content="0.2.2.54">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -804,11 +804,20 @@ body {
   clip-path:inset(50%); white-space:nowrap;
 }
 @media (max-width:859px) {
-  .app-header { justify-content:center; padding:1px 6px; text-align:center; }
-  .app-header .app-brand {
-    width:100%; max-width:220px; align-items:center; gap:0;
+  .app-header {
+    display:grid; grid-template-columns:44px minmax(0, 1fr) 44px;
+    gap:3px; padding:1px 6px; text-align:center;
   }
-  .search-bar-row .header-tools { display:contents; }
+  .app-header .app-brand {
+    grid-area:1 / 2; justify-self:center; width:100%; max-width:220px;
+    align-items:center; gap:0;
+  }
+  .app-header .header-tools { display:contents; }
+  .app-header #aboutOpen { grid-area:1 / 1; }
+  .app-header #themeToggleBtn { grid-area:1 / 3; }
+  .app-header .header-tools > button {
+    width:44px; min-height:44px; padding:0;
+  }
   .app-brand .app-titles { width:100%; text-align:center; }
   .clear-court-filters {
     display:inline-flex; min-width:44px; min-height:44px;
@@ -821,7 +830,7 @@ body {
   .app-tagline-subject { text-wrap:pretty; }
   .controls-panel { padding-inline:3px; }
   .search-bar-row {
-    display:grid; grid-template-columns:repeat(7, minmax(44px, 1fr)); gap:1px;
+    display:grid; grid-template-columns:repeat(6, minmax(44px, 1fr)); gap:1px;
   }
   #mobileSearchToggle { grid-area:1 / 1; }
   #nearMeBtn {
@@ -829,18 +838,14 @@ body {
     white-space:normal; text-align:center;
   }
   #mobileFilterBtn { grid-area:1 / 3; }
-  .clear-court-filters { grid-area:1 / 5; }
   .mobile-courts-btn {
     grid-area:1 / 4; display:inline-flex; min-width:44px; min-height:44px;
     padding-inline:0; gap:2px; color:var(--primary); font-variant-numeric:tabular-nums;
   }
   .mobile-courts-btn[aria-expanded="true"] { border-color:var(--primary); }
-  .search-bar-row #aboutOpen { grid-area:1 / 6; padding-inline:0; }
-  .search-bar-row #themeToggleBtn { grid-area:1 / 7; }
-  .search-bar-row #aboutOpen .about-button-label { display:none; }
-  .search-bar-row #aboutOpen .about-button-icon { display:block; }
+  .app-header .about-button-label { display:none; }
+  .app-header .about-button-icon { display:block; }
   .search-bar-row > button,
-  .search-bar-row .header-tools > button,
   .map-floating-controls .restroom-toggle {
     --control-fill:var(--surface-subtle);
     --control-border:var(--border);
@@ -848,8 +853,7 @@ body {
     border:0; background:transparent; box-shadow:none; border-radius:8px;
     line-height:1.1;
   }
-  .search-bar-row > button::before,
-  .search-bar-row .header-tools > button::before {
+  .search-bar-row > button::before {
     content:""; position:absolute; inset:4px 0; z-index:-1; pointer-events:none;
     border:1px solid var(--control-border); border-radius:8px;
     background:var(--control-fill);
@@ -928,7 +932,7 @@ body {
   min-height: 42px; color: inherit; background: var(--surface); border: 0;
   border-radius: 8px; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer;
 }
-.train-route-control select { min-width: 0; padding-inline: 6px; text-overflow: ellipsis; }
+.train-route-control select { width: 7.5em; min-width: 0; padding-inline: 6px; text-overflow: ellipsis; }
 .train-route-control button { min-width: 44px; font-size: 1rem; }
 .transport-pin {
   display: grid; place-items: center; border-radius: 50%; background: var(--pin-color, #1459a1);
@@ -946,11 +950,8 @@ body {
   border: 1px solid #fff8; border-radius: 50px; background: var(--route-color); color: #fff;
 }
 @media (max-width: 859px) {
-  .search-bar-row { grid-template-columns: repeat(8, minmax(44px, 1fr)); }
   .search-bar-row #trainLayerBtn { grid-area: 1 / 5; }
   .search-bar-row #bikeLayerBtn { grid-area: 1 / 6; }
-  .search-bar-row #aboutOpen { grid-area: 1 / 7; }
-  .search-bar-row #themeToggleBtn { grid-area: 1 / 8; }
   .search-bar-row #clearActiveFiltersBtn { grid-area: 2 / 1 / 3 / span 2; }
   .search-bar-row.mobile-search-open:has(#clearActiveFiltersBtn:not([hidden])) .search-input-wrap { grid-row: 3; }
   .search-bar-row .travel-layer-btn { flex-direction: column; gap: 0; padding: 2px 0; font-size: .61rem; }
@@ -960,18 +961,10 @@ body {
   }
   .travel-clear { margin-top: 4px; }
 }
-@media (max-width: 364px) {
-  .search-bar-row { grid-template-columns: repeat(6, minmax(44px, 1fr)); }
-  .search-bar-row #aboutOpen { grid-area: 2 / 5; }
-  .search-bar-row #themeToggleBtn { grid-area: 2 / 6; }
-  .search-bar-row.mobile-search-open .search-input-wrap { grid-row: 3; }
-}
 @media (max-width: 274px) {
   .search-bar-row { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
   .search-bar-row #trainLayerBtn { grid-area: 2 / 1; }
   .search-bar-row #bikeLayerBtn { grid-area: 2 / 2; }
-  .search-bar-row #aboutOpen { grid-area: 2 / 3; }
-  .search-bar-row #themeToggleBtn { grid-area: 2 / 4; }
   .search-bar-row #clearActiveFiltersBtn { grid-area: 3 / 1 / 4 / span 2; }
   .search-bar-row.mobile-search-open:has(#clearActiveFiltersBtn:not([hidden])) .search-input-wrap { grid-row: 4; }
 }
@@ -1087,26 +1080,6 @@ body {
     </div>
   </div>
 </div>
-
-<script>
-  (() => {
-    const header = document.querySelector('.app-header');
-    const tools = header.querySelector('.header-tools');
-    const toolbar = document.querySelector('.search-bar-row');
-    const mobile = window.matchMedia('(max-width:859px)');
-
-    function placeHeaderTools() {
-      const destination = mobile.matches ? toolbar : header;
-      if (tools.parentElement === destination) return;
-      const focused = document.activeElement;
-      destination.append(tools);
-      if (tools.contains(focused)) focused.focus({ preventScroll:true });
-    }
-
-    placeHeaderTools();
-    mobile.addEventListener('change', placeHeaderTools);
-  })();
-</script>
 
 <div class="viewport-stage">
   <div id="mapView"></div>
@@ -1699,6 +1672,7 @@ let travelSelection = null;
 let selectedTrainRoute = '';
 let transitLinesLayer;
 const trainPaths = new Map();
+const stopsByTrainRoute = new Map();
 let bikeRoutesLayer;
 let bikeRoutesPromise;
 let bikeRoutesLoadError = false;
@@ -1828,15 +1802,34 @@ function buildTrainRoutes() {
       ...options, color: subwayColors[route], weight: 4, opacity: .96, interactive: false
     });
     trainPaths.set(route, { casing, line });
+    stopsByTrainRoute.set(route, []);
     transitLinesLayer.addLayer(hitArea).addLayer(casing).addLayer(line);
     trainRouteSelect.add(new Option(routeName(route), route));
+  }
+
+  for (const group of stationGroups) {
+    const platforms = new Map();
+    for (const [name, services, lat, lng] of group) {
+      for (const route of stationRouteIds(name, services, lat)) {
+        if (stopsByTrainRoute.has(route) && !platforms.has(route)) {
+          platforms.set(route, { key: group, name, latlng: [lat, lng] });
+        }
+      }
+    }
+    const routes = [...platforms.keys()];
+    for (const [route, point] of platforms) stopsByTrainRoute.get(route).push({ ...point, routes });
   }
 }
 
 function selectTrainRoute(route, restoreFocus = true) {
   map.closePopup();
+  if (travelSelection?.mode === 'transit') {
+    travelHighlight.clearLayers();
+    travelSelection = null;
+  }
   selectedTrainRoute = route;
   trainRouteSelect.value = route;
+  trainRouteSelect.title = route ? routeName(route) : 'All trains';
   clearTrainRoute.hidden = !route;
   trainStationsLayer.clearLayers();
   stationMarkers.clear();
@@ -1851,16 +1844,16 @@ function selectTrainRoute(route, restoreFocus = true) {
     active.line.bringToFront();
   }
   refreshTravelMarkers();
+  renderTravelLegend();
   if (restoreFocus) trainRouteSelect.focus({ preventScroll: true });
 }
 
-function stationRoutes(group) {
-  const routes = group.flatMap(([name, services, lat]) => services.split(' ').map(route => {
+function stationRouteIds(name, services, lat) {
+  return services.split(' ').map(route => {
     if (route !== 'S') return route;
     if (name === 'Times Sq-42 St' || name === 'Grand Central-42 St') return 'ST';
     return lat < 40.63 ? 'SR' : 'SF';
-  }));
-  return [...new Set(routes)].filter(route => trainPaths.has(route));
+  });
 }
 
 function syncVisibleMarkers(points, bounds, markers, layer, createMarker) {
@@ -1881,26 +1874,14 @@ function syncVisibleMarkers(points, bounds, markers, layer, createMarker) {
   }
 }
 
-const stationPoints = stationGroups.map(group => {
-  const [name, , lat, lng] = group[0];
-  return { key: group, name, latlng: [lat, lng] };
-});
-
 function refreshTravelMarkers() {
   const zoom = map.getZoom();
   const bounds = map.getBounds().pad(.15);
-  if (activeTravelLayers.has('transit') && zoom >= 13) {
-    syncVisibleMarkers(stationPoints, bounds, stationMarkers, trainStationsLayer, ({ key, name, latlng }) => {
-      const routes = stationRoutes(key);
-      const marker = selectedTrainRoute && routes.includes(selectedTrainRoute)
-        ? makeTransportPin(latlng, name, 'train', subwayColors[selectedTrainRoute])
-        : L.circleMarker(latlng, {
-          pane: 'travelStations', renderer: travelStationRenderer,
-          radius: key.length > 1 ? 8 : 6, color: '#19222a', weight: 2.5,
-          fillColor: '#fff', fillOpacity: selectedTrainRoute ? .75 : 1
-        });
-      return marker.bindPopup(() => stationPopup(name, routes));
-    });
+  if (activeTravelLayers.has('transit') && selectedTrainRoute && zoom >= 13) {
+    const color = subwayColors[selectedTrainRoute];
+    syncVisibleMarkers(stopsByTrainRoute.get(selectedTrainRoute), bounds, stationMarkers, trainStationsLayer,
+      ({ name, latlng, routes }) => makeTransportPin(latlng, name, 'train', color)
+        .bindPopup(() => stationPopup(name, routes)));
     trainStationsLayer.addTo(map);
   } else {
     trainStationsLayer.remove();
@@ -1917,7 +1898,7 @@ function refreshTravelMarkers() {
 
 function renderTravelLegend() {
   const entries = [];
-  if (activeTravelLayers.has('transit') && map.getZoom() < 13) entries.push(['Zoom in for train stations']);
+  if (selectedTrainRoute && map.getZoom() < 13) entries.push(['Zoom in for train stations']);
   if (activeTravelLayers.has('bike')) {
     if (bikeRoutesLoadError) entries.push(['Bike lanes unavailable. Toggle Bike to retry.']);
     else if (!bikeRoutesLayer) entries.push(['Loading bike lanes…']);
@@ -2050,6 +2031,7 @@ map.on('moveend', () => {
 function showCourtTravel(site, mode, station, bikeLane, dock) {
   travelHighlight.clearLayers();
   setTravelLayer(mode, true);
+  if (mode === 'transit' && selectedTrainRoute) selectTrainRoute('', false);
   travelSelection = { site, mode };
   const bounds = L.latLngBounds([[site.lat, site.lng]]);
   if (mode === 'transit' && station) {
