@@ -9,7 +9,7 @@
 <meta name="format-detection" content="telephone=no">
 <meta name="description" content="Explore NYC pickleball courts, community net hubs, bring-your-own-net locations, and potential new court spaces with PickleLook.">
 <title>PickleLook | Explore Pickleball Courts</title>
-<meta name="application-version" content="0.2.2.56">
+<meta name="application-version" content="0.2.2.58">
 <script>
   if (window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.dataset.theme = 'dark';
@@ -187,7 +187,7 @@ body {
 .search-input-wrap input {
   width: 100%;
   height: 38px;
-  padding: 0 32px 0 34px;
+  padding: 0 12px 0 34px;
   border-radius: 19px;
   border: 1px solid var(--border);
   background: var(--surface-subtle);
@@ -210,20 +210,7 @@ body {
   pointer-events: none;
 }
 
-.search-clear-btn {
-  position: absolute;
-  right: 6px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: none;
-  place-items: center;
-  font-size: 14px;
-}
+.search-input-wrap input::-webkit-search-cancel-button { display: none; }
 
 .gps-btn {
   height: 38px;
@@ -708,10 +695,9 @@ body {
 .closest-result .restroom-result-hours { white-space: pre-line; }
 .closest-result:focus-visible { outline:3px solid var(--primary); outline-offset:-3px; }
 /* v0.2.1: compact filter status, persistent GPS access, and mobile touch targets */
-.mobile-gps-fab, .clear-court-filters { display:none; }
+.mobile-gps-fab { display:none; }
 @media (max-width:859px) {
   .mobile-gps-fab { display:grid; font-size:25px; font-weight:800; color:var(--primary); }
-  .search-clear-btn { width:36px; height:36px; right:4px; }
   .nav-app-btn { min-height:44px; align-items:center; padding:7px 10px; }
   .detail-back { min-height:44px; }
   .map-floating-controls { top:10px; right:10px; }
@@ -819,10 +805,6 @@ body {
     width:44px; min-height:44px; padding:0;
   }
   .app-brand .app-titles { width:100%; text-align:center; }
-  .clear-court-filters {
-    display:inline-flex; min-width:44px; min-height:44px;
-    padding-inline:0; color:var(--primary);
-  }
   .app-logo {
     max-width:220px; aspect-ratio:6 / 1;
   }
@@ -879,14 +861,12 @@ body {
     gap:1px; line-height:1; font-size:1em; font-weight:700;
   }
   .restroom-desktop-label { display:none; }
-  .clear-court-filters { overflow-wrap:anywhere; line-height:1.1; }
   .search-bar-row.mobile-search-open .search-input-wrap {
     grid-area:2 / 1 / 3 / -1; margin-top:0;
   }
   .mobile-filter-btn .filters-label { display:none; }
-  .controls-panel { position:relative; }
   .court-filters {
-    position:absolute; inset:100% 6px auto; gap:2px; padding:1px 2px;
+    margin-inline:3px; gap:2px; padding:1px 2px;
     background:var(--surface); border:1px solid var(--border);
     border-radius:8px; box-shadow:var(--shadow-md);
   }
@@ -922,20 +902,16 @@ body {
   color: var(--text); background: var(--surface); border: 1px solid var(--border);
   border-radius: 8px; box-shadow: var(--shadow-md);
 }
-.travel-clear { align-self: stretch; min-height: 44px; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
+.travel-clear { align-self: flex-end; min-width: 64px; min-height: 44px; padding-inline: 10px; font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer; }
 .travel-clear[hidden], .train-route-control[hidden] { display: none; }
 .train-route-control {
   position: absolute; left: 52px; top: 10px; z-index: 25; display: flex; align-items: center;
   max-width: calc(100% - 178px);
 }
-.train-route-control button {
-  display: flex; align-items: center; gap: 8px;
-  max-width: 100%; min-height: 44px; padding: 3px 8px;
-  color: inherit; background: none; border: 0;
-  font: inherit; font-size: .72rem; font-weight: 700; cursor: pointer;
+#selectedTrainLabel {
+  min-width: 0; padding: 6px 9px; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; font-size: .72rem; font-weight: 700;
 }
-.train-route-control button span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.train-route-control button span:last-child { flex: none; font-size: 1rem; }
 .transport-pin {
   display: grid; place-items: center; border-radius: 50%; background: var(--pin-color, #1459a1);
   border: 2px solid #fff; color: #fff; box-shadow: 0 1px 5px #0008;
@@ -944,6 +920,18 @@ body {
 .transport-pin.dock-pin svg { width: 14px; height: 14px; }
 .transport-pin.train-pin-compact { border-width: 1.5px; }
 .transport-pin.train-pin-compact svg { width: 13px; height: 13px; }
+.train-map-badges {
+  display: flex; align-items: center; justify-content: center;
+  height: 26px; border-radius: 14px; background: #18212a;
+  box-shadow: 0 1px 3px #0006;
+}
+.train-map-badge {
+  flex: 0 0 22px; height: 24px; border: 1px solid #fff; border-radius: 12px;
+  padding: 0; background: var(--route-color); color: #fff;
+  font: 800 clamp(11px, .65rem, 14px)/1 var(--font); cursor: pointer;
+}
+.train-map-badge.rail { flex-basis: 36px; }
+.train-map-badge:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .transport-route-badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
 .transport-route-badge {
   min-width: 44px; min-height: 44px; padding: 4px; border: 0; background: transparent;
@@ -956,8 +944,6 @@ body {
 @media (max-width: 859px) {
   .search-bar-row #trainLayerBtn { grid-area: 1 / 5; }
   .search-bar-row #bikeLayerBtn { grid-area: 1 / 6; }
-  .search-bar-row #clearActiveFiltersBtn { grid-area: 2 / 1 / 3 / span 2; }
-  .search-bar-row.mobile-search-open:has(#clearActiveFiltersBtn:not([hidden])) .search-input-wrap { grid-row: 3; }
   .search-bar-row .travel-layer-btn { flex-direction: column; gap: 0; padding: 2px 0; font-size: .61rem; }
   .search-bar-row .travel-layer-btn svg { width: 15px; height: 15px; }
   .search-bar-row .travel-layer-btn[aria-pressed="true"] {
@@ -969,8 +955,7 @@ body {
   .search-bar-row { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
   .search-bar-row #trainLayerBtn { grid-area: 2 / 1; }
   .search-bar-row #bikeLayerBtn { grid-area: 2 / 2; }
-  .search-bar-row #clearActiveFiltersBtn { grid-area: 3 / 1 / 4 / span 2; }
-  .search-bar-row.mobile-search-open:has(#clearActiveFiltersBtn:not([hidden])) .search-input-wrap { grid-row: 4; }
+  .search-bar-row.mobile-search-open .search-input-wrap { grid-row: 3; }
 }
 .travel-summary { font-size: .83rem; color: var(--text); }
 .travel-summary h4 { margin: 10px 0 4px; }
@@ -1051,7 +1036,6 @@ body {
     <div class="search-input-wrap">
       <span class="search-leading-icon">🔍</span>
       <input type="search" id="courtSearchInput" placeholder="Search parks, neighborhoods, addresses...">
-      <button class="search-clear-btn" id="searchClearBtn">✕</button>
     </div>
     <button class="gps-btn" id="nearMeBtn" type="button" aria-pressed="false">Near Me</button>
     <button class="action-btn mobile-filter-btn" id="mobileFilterBtn" aria-label="Show court filters" aria-expanded="false" aria-controls="courtFilters" type="button" title="Filters"><span aria-hidden="true">☷</span><span class="filters-label">Filters</span></button>
@@ -1061,7 +1045,6 @@ body {
     </button>
     <button class="action-btn travel-layer-btn" id="trainLayerBtn" type="button" aria-pressed="false" aria-controls="mapView"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="3" width="14" height="15" rx="3"/><path d="M5 11h14M9 18l-3 3m9-3 3 3M9 15h.01m6 0h.01"/></svg><span>Train</span></button>
     <button class="action-btn travel-layer-btn" id="bikeLayerBtn" type="button" aria-pressed="false" aria-controls="mapView"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="5" cy="17" r="4"/><circle cx="19" cy="17" r="4"/><path d="m5 17 4-7 5 7H5m9 0 3-11h-3M8 7h4"/></svg><span>Bike</span></button>
-    <button class="action-btn clear-court-filters" id="clearActiveFiltersBtn" type="button" aria-label="Clear court filters" hidden>Clear</button>
     <span id="activeFiltersText" role="status"></span>
   </div>
 
@@ -1088,9 +1071,7 @@ body {
 <div class="viewport-stage">
   <div id="mapView"></div>
   <div id="trainRouteControl" class="train-route-control" hidden>
-    <button id="clearTrainRoute" type="button">
-      <span id="selectedTrainLabel"></span><span aria-hidden="true">×</span>
-    </button>
+    <span id="selectedTrainLabel" role="status"></span>
   </div>
 
   <div class="map-floating-controls">
@@ -1110,7 +1091,7 @@ body {
       <span class="restroom-desktop-label" aria-hidden="true">RestRooms</span>
       <span class="restroom-label restroom-mobile-lines" aria-hidden="true"><span>Rest</span><span>Rooms</span></span>
     </button>
-    <button class="travel-clear" id="clearTravelLayers" type="button" hidden>Clear layers</button>
+    <button class="travel-clear" id="clearMapBtn" type="button" aria-label="Clear search, filters, and travel layers" hidden>Clear</button>
     <div id="travelLegend" class="travel-legend" aria-live="polite" hidden></div>
     <button class="fab-btn" id="recenterBtn" title="Fit All Courts" aria-label="Fit all filtered courts">🎯</button>
     <button class="fab-btn mobile-gps-fab" id="floatingGpsBtn" type="button" title="Find my location" aria-label="Near Me" aria-pressed="false">◎</button>
@@ -1170,7 +1151,7 @@ const boroughCenters = {
 let activeBorough = 'all';
 let activeType = 'all';
 let searchQuery = '';
-let currentMarkers = [];
+let pendingCourtList = null;
 let userLocationMarker = null;
 let userCoords = null;
 let locationRequest = 0;
@@ -1288,16 +1269,18 @@ function courtCountLabel(site) {
 function renderSites() {
   travelSelection = null;
   travelHighlight.clearLayers();
-  currentMarkers.forEach(m => map.removeLayer(m));
-  currentMarkers = [];
-  markerById.clear();
-
   const visible = getFilteredSites();
+  const visibleIds = new Set(visible.map(site => site.id));
+  for (const [id, marker] of markerById) {
+    if (visibleIds.has(id)) continue;
+    map.removeLayer(marker);
+    markerById.delete(id);
+  }
   const origin = userCoords;
-  const cards = [];
+  pendingCourtList = { visible, origin };
   updateMobileListButton(visible.length);
   const container = document.getElementById('sheetCardsContainer');
-  container.innerHTML = '';
+  container.replaceChildren();
   document.getElementById("selectedCourtDetails").hidden = true;
   container.hidden = false;
 
@@ -1305,12 +1288,13 @@ function renderSites() {
   document.getElementById('sheetResultsCount').textContent =
     origin ? `${resultsCount} · ${origin.approximate ? 'Nearest to estimated location' : 'Nearest first'}` : `${resultsCount} available`;
 
-  visible.forEach(site => {
+  for (const site of visible) {
+    if (markerById.has(site.id)) continue;
     const conf = typeConfig[site.cat] || { label: "Court", color: "#026b72" };
     const marker = L.marker([site.lat, site.lng], { icon: getPinIcon(site) });
     const navUrl = buildDirectionsUrl(site.lat, site.lng, site.name);
 
-    marker.bindPopup(`
+    marker.bindPopup(() => `
       <div style="font-family:var(--font); font-size:12px; line-height:1.35; min-width:210px;">
         <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
           <span class="status-badge" style="background:${conf.color};">${conf.label}</span>
@@ -1327,9 +1311,21 @@ function renderSites() {
 
     marker.addTo(map);
     marker.on("click", () => selectCourt(site, marker));
-    currentMarkers.push(marker);
     markerById.set(site.id, marker);
+  }
+  renderCourtListIfOpen();
+  renderTrainLabels();
+}
 
+function renderCourtListIfOpen() {
+  const container = document.getElementById('sheetCardsContainer');
+  if (restroomMode || container.hidden || !pendingCourtList || sheet.classList.contains('state-collapsed')) return;
+  const { visible, origin } = pendingCourtList;
+  pendingCourtList = null;
+
+  const cards = visible.map(site => {
+    const conf = typeConfig[site.cat] || { label: 'Court', color: '#026b72' };
+    const navUrl = buildDirectionsUrl(site.lat, site.lng, site.name);
     const meters = origin ? straightLineMeters(origin.lat, origin.lng, site.lat, site.lng) : null;
     const distanceLabel = meters === null ? '' : ` · ${(meters / 1000).toFixed(2)} km straight line${origin.approximate ? ' (approx.)' : ''}`;
     const card = document.createElement('div');
@@ -1350,10 +1346,10 @@ function renderSites() {
     `;
 
     card.onclick = () => {
-      selectCourt(site, marker, card);
+      selectCourt(site, markerById.get(site.id), card);
     };
 
-    cards.push({ card, meters });
+    return { card, meters };
   });
   if (origin) cards.sort((a, b) => a.meters - b.meters);
   container.append(...cards.map(({ card }) => card));
@@ -1641,11 +1637,10 @@ const travelButtons = {
   transit: document.getElementById('trainLayerBtn'),
   bike: document.getElementById('bikeLayerBtn')
 };
-const clearTravelLayers = document.getElementById('clearTravelLayers');
+const clearMapBtn = document.getElementById('clearMapBtn');
 const travelLegend = document.getElementById('travelLegend');
 const trainRouteControl = document.getElementById('trainRouteControl');
 const selectedTrainLabel = document.getElementById('selectedTrainLabel');
-const clearTrainRoute = document.getElementById('clearTrainRoute');
 const activeTravelLayers = new Set();
 const stationGroups = readTravelData('train-stations');
 const trainStops = stationGroups.flatMap(group => group.map(
@@ -1662,7 +1657,7 @@ const bikeStyles = {
 const subwayColors = {
   '1': '#ee352e', '2': '#ee352e', '3': '#ee352e', '4': '#008751', '5': '#008751',
   '6': '#008751', '7': '#a626a6', A: '#0039a6', C: '#0039a6', E: '#0039a6',
-  B: '#c84600', D: '#c84600', F: '#c84600', M: '#c84600', G: '#528500',
+  B: '#e65100', D: '#e65100', F: '#e65100', M: '#e65100', G: '#528500',
   J: '#955725', Z: '#955725', L: '#687178', N: '#a77300', Q: '#a77300',
   R: '#a77300', W: '#a77300', SIR: '#154e84', SF: '#57616a', ST: '#57616a', SR: '#57616a'
 };
@@ -1689,11 +1684,13 @@ let dockLoadError = false;
 const stationMarkers = new Map();
 const dockMarkers = new Map();
 const trainStationsLayer = L.layerGroup();
+const trainLabelsLayer = L.layerGroup();
 const dockStationsLayer = L.layerGroup();
 const travelHighlight = L.layerGroup().addTo(map);
 
 map.createPane('bikeLines').style.zIndex = '331';
 map.createPane('trainLines').style.zIndex = '340';
+map.createPane('trainLabels').style.zIndex = '410';
 map.createPane('travelStations').style.zIndex = '430';
 const bikeLineRenderer = L.canvas({ pane: 'bikeLines' });
 const trainLineRenderer = L.svg({ pane: 'trainLines' });
@@ -1804,9 +1801,9 @@ function buildTrainRoutes() {
     const hitArea = L.polyline(paths, {
       ...options, weight: 18, opacity: 0, bubblingMouseEvents: false
     }).on('click', tapTrainPath);
-    const casing = L.polyline(paths, { ...options, color: '#fff', weight: 7, opacity: .88, interactive: false });
+    const casing = L.polyline(paths, { ...options, color: '#fff', weight: 8, opacity: .92, interactive: false });
     const line = L.polyline(paths, {
-      ...options, color: subwayColors[route], weight: 4, opacity: .96, interactive: false
+      ...options, color: subwayColors[route], weight: 4.5, opacity: 1, interactive: false
     });
     trainPaths.set(route, { casing, line });
     transitLinesLayer.addLayer(hitArea).addLayer(casing).addLayer(line);
@@ -1834,27 +1831,21 @@ function selectTrainRoute(route, restoreFocus = true) {
   }
   selectedTrainRoute = route;
   trainRouteControl.hidden = !route;
-  if (route) {
-    const label = routeName(route);
-    selectedTrainLabel.textContent = label;
-    clearTrainRoute.title = label;
-    clearTrainRoute.setAttribute('aria-label', `Clear ${label} selection and show all trains`);
-  }
+  selectedTrainLabel.textContent = route ? routeName(route) : '';
   trainStationsLayer.clearLayers();
   stationMarkers.clear();
   for (const [id, { casing, line }] of trainPaths) {
     const selected = id === route;
-    casing.setStyle({ weight: selected ? 10 : 7, opacity: !route || selected ? .9 : .18 });
-    line.setStyle({ weight: selected ? 7 : 4, opacity: !route || selected ? .96 : .3 });
+    casing.setStyle({ weight: selected ? 10 : 8, opacity: !route || selected ? .92 : .18 });
+    line.setStyle({ weight: selected ? 7 : 4.5, opacity: !route || selected ? 1 : .3 });
   }
   const active = trainPaths.get(route);
   if (active) {
     active.casing.bringToFront();
     active.line.bringToFront();
   }
-  refreshTravelMarkers();
-  renderTravelLegend();
-  if (restoreFocus) (route ? clearTrainRoute : travelButtons.transit).focus({ preventScroll: true });
+  refreshTravelMap();
+  if (restoreFocus) travelButtons.transit.focus({ preventScroll: true });
 }
 
 function stationRouteIds(name, services, lat) {
@@ -1914,6 +1905,93 @@ function refreshTravelMarkers() {
   }
 }
 
+function renderTrainLabels() {
+  trainLabelsLayer.clearLayers();
+  if (!activeTravelLayers.has('transit') || map.getZoom() < trainStationZoom) return;
+  const size = map.getSize();
+  const view = L.bounds([30, 14], [size.x - 30, size.y - 24]);
+  if (size.x < 100 || size.y < 120) return;
+
+  const mapRect = map.getContainer().getBoundingClientRect();
+  const occupied = [...document.querySelectorAll('.map-floating-controls, .leaflet-top, #trainRouteControl, .leaflet-popup, #courtSheet')].flatMap(element => {
+    const rect = element.getBoundingClientRect();
+    if (!rect.width || !rect.height) return [];
+    return [L.bounds([rect.left - mapRect.left - 5, rect.top - mapRect.top - 5],
+      [rect.right - mapRect.left + 5, rect.bottom - mapRect.top + 5])];
+  });
+  for (const [markers, radius] of [[markerById, 17], [stationMarkers, 12], [dockMarkers, 14], [restroomMarkers, 14]]) {
+    for (const marker of markers.values()) {
+      if (!map.hasLayer(marker)) continue;
+      const point = map.latLngToContainerPoint(marker.getLatLng());
+      occupied.push(L.bounds(point.subtract([radius, radius]), point.add([radius, radius])));
+    }
+  }
+
+  const candidates = [];
+  const center = size.divideBy(2);
+  for (const [route, { line }] of trainPaths) {
+    if (selectedTrainRoute && route !== selectedTrainRoute) continue;
+    for (const path of line.getLatLngs()) {
+      const points = path.map(point => map.latLngToContainerPoint(point));
+      for (let i = 1; i < points.length; i++) {
+        const segment = L.LineUtil.clipSegment(points[i - 1], points[i], view);
+        if (!segment) continue;
+        const [start, end] = segment;
+        const delta = end.subtract(start);
+        const length = start.distanceTo(end);
+        if (length < 26) continue;
+        const steps = Math.min(6, Math.ceil(length / 44));
+        for (let step = 0; step < steps; step++) {
+          const point = start.add(delta.multiplyBy((step + .5) / steps));
+          candidates.push({ route, point, tangent: delta.multiplyBy(11 / length), score: point.distanceTo(center) });
+        }
+      }
+    }
+  }
+  candidates.sort((a, b) => a.score - b.score);
+  const shownRoutes = new Set();
+  const limit = Math.min(9, Math.max(2, Math.floor(size.x * size.y / 39000)));
+  for (const { route, point, tangent } of candidates) {
+    const minimumBox = L.bounds(point.subtract([19, 18]), point.add([19, 18]));
+    if (!view.contains(minimumBox) || occupied.some(area => area.intersects(minimumBox))) continue;
+    const layerPoint = map.containerPointToLayerPoint(point);
+    const routes = selectedTrainRoute ? [route] : [...trainPaths].filter(([id, { line }]) => {
+      if (id === route) return true;
+      if (subwayColors[id] !== subwayColors[route]) return false;
+      return [layerPoint, layerPoint.add(tangent), layerPoint.subtract(tangent)]
+        .every(sample => line.closestLayerPoint(sample)?.distance <= 5);
+    }).map(([id]) => id);
+    if (routes.every(id => shownRoutes.has(id))) continue;
+
+    const width = routes.reduce((total, id) => total + (id === 'SIR' ? 36 : 22), 0) + 4;
+    const box = L.bounds(point.subtract([width / 2 + 6, 18]), point.add([width / 2 + 6, 18]));
+    if (!view.contains(box) || occupied.some(area => area.intersects(box))) continue;
+    occupied.push(box);
+    routes.forEach(id => shownRoutes.add(id));
+
+    const group = document.createElement('div');
+    group.className = 'train-map-badges';
+    for (const id of routes) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = id === 'SIR' ? 'train-map-badge rail' : 'train-map-badge';
+      button.textContent = shuttleNames[id] ? 'S' : id;
+      button.style.setProperty('--route-color', subwayColors[id]);
+      if ('1 2 3 B D F M'.split(' ').includes(id)) button.style.color = '#121212';
+      button.setAttribute('aria-label', `Highlight ${routeName(id)}`);
+      button.onclick = () => selectTrainRoute(id);
+      group.append(button);
+    }
+    L.DomEvent.disableClickPropagation(group);
+    L.marker(map.containerPointToLatLng(point), {
+      pane: 'trainLabels', keyboard: false,
+      icon: L.divIcon({ className: 'train-map-label', html: group, iconSize: [width, 26] })
+    }).addTo(trainLabelsLayer);
+    if (trainLabelsLayer.getLayers().length >= limit) break;
+  }
+  if (!map.hasLayer(trainLabelsLayer)) trainLabelsLayer.addTo(map);
+}
+
 function renderTravelLegend() {
   const entries = [];
   if (activeTravelLayers.has('transit') && map.getZoom() < trainStationZoom) entries.push(['Zoom in for train stations']);
@@ -1943,6 +2021,7 @@ function refreshTravelMap() {
   else bikeRoutesLayer?.remove();
   refreshTravelMarkers();
   renderTravelLegend();
+  renderTrainLabels();
 }
 
 function loadBikeRoutes() {
@@ -2024,7 +2103,7 @@ function setTravelLayer(mode, enabled) {
     travelSelection = null;
     travelHighlight.clearLayers();
   }
-  clearTravelLayers.hidden = activeTravelLayers.size < 2;
+  updateMapClearVisibility();
   refreshTravelMap();
 }
 
@@ -2038,12 +2117,6 @@ travelButtons.bike.onclick = () => {
   if (enabled && map.getZoom() < 14) map.setZoom(14, { animate: false });
   setTravelLayer('bike', enabled);
 };
-clearTravelLayers.onclick = () => {
-  setTravelLayer('transit', false);
-  setTravelLayer('bike', false);
-  travelButtons.transit.focus({ preventScroll: true });
-};
-clearTrainRoute.onclick = () => selectTrainRoute('');
 map.on('moveend', () => {
   if (activeTravelLayers.size) refreshTravelMap();
 });
@@ -2198,6 +2271,9 @@ function selectCourt(site, marker, card) {
 const sheet = document.getElementById('courtSheet');
 const sheetHandle = document.getElementById('sheetHandle');
 const sheetToggleBtn = document.getElementById('sheetToggleBtn');
+sheet.addEventListener('transitionend', event => {
+  if (event.target === sheet && event.propertyName === 'transform' && activeTravelLayers.has('transit')) renderTrainLabels();
+});
 const mobileCourtsBtn = document.getElementById('mobileCourtsBtn');
 const mobileListIcon = document.getElementById('mobileListIcon');
 const mobileCourtCount = document.getElementById('mobileCourtCount');
@@ -2217,9 +2293,10 @@ function setMobileFilters(open) {
   controlsPanel.classList.toggle('mobile-filters-open', open);
   mobileFilterBtn.setAttribute('aria-expanded', String(open));
   mobileFilterBtn.setAttribute('aria-label', open ? 'Hide court filters' : 'Show court filters');
+  map.invalidateSize({ pan: false, debounceMoveend: true });
 }
 mobileFilterBtn.onclick = () => setMobileFilters(!controlsPanel.classList.contains('mobile-filters-open'));
-document.addEventListener('pointerdown', event => {
+document.addEventListener('click', event => {
   if (!controlsPanel.contains(event.target) && controlsPanel.classList.contains('mobile-filters-open')) {
     setMobileFilters(false);
   }
@@ -2250,6 +2327,7 @@ document.getElementById('mobileSheetClose').onclick = (event) => {
 function setSheetState(state) {
   sheet.classList.remove('state-expanded', 'state-half', 'state-collapsed');
   sheet.classList.add(state);
+  renderCourtListIfOpen();
   const mobileOpen = window.innerWidth < 860 && state !== 'state-collapsed';
   mobileCourtsBtn.setAttribute('aria-expanded', String(mobileOpen));
   if (window.innerWidth < 860) sheet.setAttribute('aria-hidden', String(!mobileOpen));
@@ -2305,9 +2383,9 @@ function updateMobileFilterStatus() {
   const names = [];
   if (activeBorough !== 'all') names.push(activeBorough);
   if (activeType !== 'all') names.push(({active:'Outdoor',byon:'Bring Your Own Net',indoor:'Indoor · Rec Centers',scheduled:'Mixed Use / Pop-up'})[activeType] || activeType);
-  clearActiveFiltersBtn.hidden = restroomMode || names.length === 0;
   document.getElementById('activeFiltersText').textContent =
-    clearActiveFiltersBtn.hidden ? '' : 'Court filters: ' + names.join(' · ');
+    restroomMode || names.length === 0 ? '' : 'Court filters: ' + names.join(' · ');
+  updateMapClearVisibility();
 }
 function resetAllCourtFilters() {
   activeBorough = 'all';
@@ -2323,14 +2401,7 @@ function resetAllCourtFilters() {
     b.setAttribute('aria-pressed', String(selected));
   });
   updateMobileFilterStatus();
-  renderSites();
-  map.flyTo(boroughCenters.all.center, boroughCenters.all.zoom, { duration:0.6 });
 }
-const clearActiveFiltersBtn = document.getElementById('clearActiveFiltersBtn');
-clearActiveFiltersBtn.onclick = () => {
-  resetAllCourtFilters();
-  mobileFilterBtn.focus({ preventScroll:true });
-};
 
 document.querySelectorAll('#boroughChips .chip').forEach(btn => {
   btn.onclick = () => {
@@ -2368,7 +2439,6 @@ document.querySelectorAll('#typeChips .chip').forEach(btn => {
 });
 
 const searchInput = document.getElementById('courtSearchInput');
-const clearBtn = document.getElementById('searchClearBtn');
 
 // v0.2.1.7: preserve desktop search and mobile search behavior behind a compact toggle.
 const mobileSearchToggle = document.getElementById('mobileSearchToggle');
@@ -2404,7 +2474,7 @@ let searchTrackedThisSession = false;
 searchInput.oninput = (e) => {
   if (restroomMode) {
     restroomQuery = e.target.value.trim();
-    clearBtn.style.display = restroomQuery ? 'grid' : 'none';
+    updateMapClearVisibility();
     clearTimeout(searchRenderTimer);
     searchRenderTimer = setTimeout(() => renderRestroomResults(true), 160);
     return;
@@ -2415,24 +2485,41 @@ searchInput.oninput = (e) => {
     searchTrackedThisSession = true;
   }
   if (!searchQuery) searchTrackedThisSession = false;
-  clearBtn.style.display = searchQuery ? 'grid' : 'none';
+  updateMapClearVisibility();
   clearTimeout(searchRenderTimer);
   searchRenderTimer = setTimeout(renderSites, 160);
 };
 
-clearBtn.onclick = () => {
-  clearTimeout(searchRenderTimer);
-  searchInput.value = '';
-  if (restroomMode) {
-    restroomQuery = '';
-    clearBtn.style.display = 'none';
-    renderRestroomResults();
-    return;
+function updateMapClearVisibility() {
+  const hasCourtFilters = activeBorough !== 'all' || activeType !== 'all';
+  const hasSearch = Boolean(restroomMode ? restroomQuery : searchQuery);
+  clearMapBtn.hidden = !activeTravelLayers.size && !hasSearch && (restroomMode || !hasCourtFilters);
+}
+
+clearMapBtn.onclick = () => {
+  const resetCourtFilters = !restroomMode && (activeBorough !== 'all' || activeType !== 'all');
+  const hadSearch = Boolean(restroomMode ? restroomQuery : searchQuery);
+  const hadTravelLayers = activeTravelLayers.size > 0;
+  for (const mode of activeTravelLayers) setTravelLayer(mode, false);
+  if (hadSearch) {
+    clearTimeout(searchRenderTimer);
+    searchInput.value = '';
+    if (restroomMode) {
+      restroomQuery = '';
+      renderRestroomResults();
+    } else {
+      searchQuery = '';
+      searchTrackedThisSession = false;
+    }
   }
-  searchQuery = '';
-  searchTrackedThisSession = false;
-  clearBtn.style.display = 'none';
-  renderSites();
+  if (resetCourtFilters) resetAllCourtFilters();
+  if (!restroomMode && (hadSearch || resetCourtFilters)) renderSites();
+  if (resetCourtFilters) map.flyTo(boroughCenters.all.center, boroughCenters.all.zoom, { duration: 0.6 });
+  updateMapClearVisibility();
+  const nextControl = hadTravelLayers ? travelButtons.transit
+    : resetCourtFilters && mobileFilterBtn.offsetWidth ? mobileFilterBtn
+    : hadSearch && searchInput.offsetWidth ? searchInput : restroomToggle;
+  nextControl.focus({ preventScroll: true });
 };
 
 const nearMeBtn = document.getElementById('nearMeBtn');
@@ -2726,7 +2813,6 @@ async function setRestroomMode(active) {
   searchInput.value = active ? restroomQuery : searchQuery;
   searchInput.placeholder = active ? 'Search parks, libraries, boroughs…' : 'Search parks, neighborhoods, addresses...';
   searchInput.setAttribute('aria-label', active ? 'Search public restrooms' : 'Search courts');
-  clearBtn.style.display = searchInput.value ? 'grid' : 'none';
   updateSearchToggleLabel();
   const recenter = document.getElementById('recenterBtn');
   recenter.title = active ? 'Fit NYC Restrooms' : 'Fit All Courts';
@@ -2739,9 +2825,9 @@ async function setRestroomMode(active) {
     renderSites();
     return;
   }
-  currentMarkers.forEach(marker => map.removeLayer(marker));
-  currentMarkers = [];
+  for (const marker of markerById.values()) map.removeLayer(marker);
   markerById.clear();
+  renderTrainLabels();
   restroomStatus = 'Loading public restrooms…';
   renderRestroomResults();
   try {
