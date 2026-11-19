@@ -543,29 +543,24 @@ body {
   transition: transform 0.15s;
 }
 .travel-layer-active :is(.map-court-pin, .filter-pin) {
-  --court-rim-dot-radius: 1.1px;
-  --court-rim-dot: #63ff31 var(--court-rim-dot-radius), transparent calc(var(--court-rim-dot-radius) + .3px);
+  --court-ring-gap: 2px;
+  --court-outer-ring: 4px;
+  --court-ring-edge: 5px;
   color-scheme: only light;
-  border-color: #23291b;
-  background-image:
-    radial-gradient(circle at 50% 9%, var(--court-rim-dot)),
-    radial-gradient(circle at 70.5% 14.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 85.5% 29.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 91% 50%, var(--court-rim-dot)),
-    radial-gradient(circle at 85.5% 70.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 70.5% 85.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 50% 91%, var(--court-rim-dot)),
-    radial-gradient(circle at 29.5% 85.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 14.5% 70.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 9% 50%, var(--court-rim-dot)),
-    radial-gradient(circle at 14.5% 29.5%, var(--court-rim-dot)),
-    radial-gradient(circle at 29.5% 14.5%, var(--court-rim-dot));
+  border: 2px solid #63ff31;
+  background-image: none;
+  box-shadow:
+    0 0 0 var(--court-ring-gap) #23291b,
+    0 0 0 var(--court-outer-ring) #63ff31,
+    0 0 0 var(--court-ring-edge) #23291b,
+    0 2px 6px rgba(0,0,0,0.35);
 }
-.travel-layer-active .map-court-pin {
-  --court-rim-dot-radius: 1.5px;
-  box-shadow: 0 0 0 1px #23291b, 0 2px 6px rgba(0,0,0,0.35);
+.travel-layer-active .filter-pin {
+  --court-ring-gap: 1.5px;
+  --court-outer-ring: 3px;
+  --court-ring-edge: 4px;
+  border-width: 1.5px;
 }
-.travel-layer-active .filter-pin { border-width: 2px; }
 .map-court-pin:hover { transform: scale(1.2); }
 
 @media (min-width: 860px) {
@@ -636,7 +631,11 @@ body {
   .sheet-scroll-content { overscroll-behavior:contain; }
   .selected-court-details { padding:10px 16px calc(18px + var(--safe-bottom)); }
   .map-court-pin { width:34px; height:34px; }
-  .travel-layer-active .map-court-pin { --court-rim-dot-radius:1.9px; border-width:3px; }
+   .travel-layer-active .map-court-pin {
+    --court-outer-ring: 5px;
+    --court-ring-edge: 6px;
+    border-width: 3px;
+  }
   .map-floating-controls { top:10px; right:10px; }
 }
 /* v0.2.1.4: compact mobile discovery controls; keep 44px touch targets. */
