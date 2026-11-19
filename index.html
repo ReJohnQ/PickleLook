@@ -543,11 +543,11 @@ body {
   transition: transform 0.15s;
 }
 .travel-layer-active :is(.map-court-pin, .filter-pin) {
-  --court-ring-gap: 2px;
-  --court-outer-ring: 4px;
-  --court-ring-edge: 5px;
+  --court-ring-gap: 1px;
+  --court-outer-ring: 2.5px;
+  --court-ring-edge: 3.25px;
   color-scheme: only light;
-  border: 2px solid #63ff31;
+  border: 1.5px solid #63ff31;
   background-image: none;
   box-shadow:
     0 0 0 var(--court-ring-gap) #23291b,
@@ -556,10 +556,10 @@ body {
     0 2px 6px rgba(0,0,0,0.35);
 }
 .travel-layer-active .filter-pin {
-  --court-ring-gap: 1.5px;
-  --court-outer-ring: 3px;
-  --court-ring-edge: 4px;
-  border-width: 1.5px;
+  --court-ring-gap: 1px;
+  --court-outer-ring: 2px;
+  --court-ring-edge: 2.75px;
+  border-width: 1px;
 }
 .map-court-pin:hover { transform: scale(1.2); }
 
@@ -632,9 +632,9 @@ body {
   .selected-court-details { padding:10px 16px calc(18px + var(--safe-bottom)); }
   .map-court-pin { width:34px; height:34px; }
    .travel-layer-active .map-court-pin {
-    --court-outer-ring: 5px;
-    --court-ring-edge: 6px;
-    border-width: 3px;
+    --court-outer-ring: 2.5px;
+    --court-ring-edge: 3.25px;
+    border-width: 1.5px;
   }
   .map-floating-controls { top:10px; right:10px; }
 }
@@ -942,7 +942,7 @@ body {
 }
 .leaflet-bikeLines-pane { pointer-events: none; }
 .transport-pin.dock-pin svg { width: 14px; height: 14px; }
-.transport-pin.train-pin-compact { border-width: 1.5px; }
+.transport-pin.train-pin-compact { border-width: 1px; }
 .transport-pin.train-pin-compact svg { width: 13px; height: 13px; }
 .train-map-badges {
   display: flex; align-items: center; justify-content: center;
